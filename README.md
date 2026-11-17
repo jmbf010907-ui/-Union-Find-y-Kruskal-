@@ -260,7 +260,17 @@ raíz. No se recorre la red, solo se hacen dos `find`.
 
 **Teoría:** `find(D) = find(E) = A`, así que ya existe el camino `D–F–E`. Este
 cable solo cerraría un **ciclo**: `union` corta en el primer `if` y regresa
-**`False`** sin tocar nada. Es exactamente la señal que usa Kruskal.
+**`False`** sin tocar nada. No es un error: es la señal que usa Kruskal para
+saltarse un cable que sobra.
+
+### Paso 7 · cable A–C (6) · `union(A, C)` cierra la red
+
+![Paso 7](media/s1_paso7.png)
+
+**Teoría:** `find(C) = C` es raíz distinta de `A`, y `rango[C] = 0 < rango[A] = 2`,
+así que **C cuelga de A**. `conjuntos` baja a **1**: las 6 computadoras quedan en
+un solo conjunto y `conectados(A, C)` ya regresa `True`. Es el mismo cable con el
+que Kruskal termina en la sección 2.
 
 ### Lo que imprime
 
@@ -283,6 +293,9 @@ Paso 5  ¿ya están conectadas?
         conectados(A, C) -> False
 Paso 6  cable D-E (5)   union(D, E) -> False   (misma raíz: sería un ciclo)
    padre = [A, A, C, A, A, A]   rango = [2, 0, 0, 1, 0, 0]   conjuntos = 2
+Paso 7  cable A-C (6)   union(A, C) -> True   (C se conecta: la red queda cerrada)
+   padre = [A, A, A, A, A, A]   rango = [2, 0, 0, 1, 0, 0]   conjuntos = 1
+        conectados(A, C) -> True   ·  conjuntos = 1
 ```
 
 ---

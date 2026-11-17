@@ -261,6 +261,13 @@ uf_step(T + "paso6.png", "Paso 6", "cable D–E  ·  union(D, E)",
          "Kruskal usa justo este False."],
         sts(4, 4), 4, set(), 2, {3: RED, 4: RED},
         badge=("False · ciclo", RED, RED_BG), color=RED)
+uf_step(T + "paso7.png", "Paso 7", "cable A–C  ·  union(A, C)",
+        "C era la única sin conectar: find(C) = C, rango 0 < 2, así que C cuelga de A.",
+        [0, 0, 0, 0, 0, 0], [2, 0, 0, 1, 0, 0],
+        ["Ya están las 6 computadoras", "en un solo conjunto:", "", "  conjuntos = 1", "  conectados(A, C) → True", "",
+         "La red quedó cerrada."],
+        sts(6, 4), 5, {(0, 2)}, 1, {2: GREEN}, hot_edge=(2, 0),
+        badge=("True · red cerrada", GREEN, GREEN_BG), color=GREEN)
 
 # ================= Sección 2 · Kruskal =================
 def k_step(name, k, paso, titulo, sub, teoria, color, changed=()):

@@ -40,3 +40,13 @@ def test_kruskal():
     arbol, costo = kruskal(6, CABLES)
     assert costo == 16
     assert [(u, v) for u, v, _ in arbol] == [("A", "B"), ("D", "F"), ("B", "D"), ("E", "F"), ("A", "C")]
+
+
+def test_red_cerrada():
+    uf = UnionFind(6)
+    for u, v in [("A", "B"), ("D", "F"), ("B", "D"), ("E", "F")]:
+        uf.union(ID[u], ID[v])
+    assert uf.union(ID["D"], ID["E"]) is False   # sobra: ciclo
+    assert uf.union(ID["A"], ID["C"]) is True    # C se conecta
+    assert uf.conjuntos == 1                     # una sola red
+    assert all(uf.conectados(0, i) for i in range(6))

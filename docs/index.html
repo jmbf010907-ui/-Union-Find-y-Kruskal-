@@ -191,6 +191,10 @@ const UF_STEPS = [
    desc:"find(D) = find(E) = A: ya hay camino D–F–E, así que este cable cerraría un ciclo y se descarta.",
    th:["Detectar ciclos","Si <code>find(a) == find(b)</code>, union no cambia nada y devuelve False. Kruskal usa justo ese False para saber qué cable sobra."],
    run:(uf,log)=>{ const r=uf.union(3,4); log.push(["f",`Paso 6  cable D-E (5)   union(D, E) -> ${py(r)}   (misma raíz: sería un ciclo)`],["s",estado(uf)]); return r; }},
+  {op:"cable A–C · union(A, C)", tag:"Paso 7", color:"green", st:sts(6,4), cur:5, focus:["A","C"],
+   desc:"C era la única sin conectar: find(C) = C y rango 0 < 2, así que C cuelga de A. Las 6 computadoras quedan en un solo conjunto.",
+   th:["La red se cierra","<code>conjuntos</code> llega a 1: todas las computadoras comparten raíz. Es justo el cable A–C (6) con el que Kruskal termina en la sección 2."],
+   run:(uf,log)=>{ const r=uf.union(0,2); log.push(["h",`Paso 7  cable A-C (6)   union(A, C) -> ${py(r)}   (C se conecta: la red queda cerrada)`],["s",estado(uf)],["p",`        conectados(A, C) -> ${py(uf.conectados(0,2))}  ·  conjuntos = ${uf.conjuntos}`]); return r; }},
 ];
 
 /* ---------- Sección 2: Kruskal (kruskal.py) ---------- */

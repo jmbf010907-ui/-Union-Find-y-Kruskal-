@@ -64,6 +64,11 @@ def demo():
     print("Paso 6  cable D-E (5)   union(D, E) ->", uf.union(ID["D"], ID["E"]),
           "  (misma raíz: sería un ciclo)")
     print(estado(uf))
+    print("Paso 7  cable A-C (6)   union(A, C) ->", uf.union(ID["A"], ID["C"]),
+          "  (C se conecta: la red queda cerrada)")
+    print(estado(uf))
+    print("        conectados(A, C) ->", uf.conectados(ID["A"], ID["C"]),
+          "  ·  conjuntos =", uf.conjuntos)
     return uf
 
 
