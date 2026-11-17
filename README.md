@@ -14,7 +14,7 @@
 
 | Nombre                 | Número de cuenta | Parte de la exposición |
 |Bolaños Fuentes Juan Manuel|323257419|Demostracion y Analisis|
-| | | |
+|Prado Gutierrez Juan Alejandro |323156271|Demo y explicacion de algoritmo|
 | | | |
 | | | |
 
@@ -70,12 +70,15 @@ class UnionFind:
         if self.rango[ra] == self.rango[rb]:
             self.rango[ra] += 1
         self.conjuntos -= 1
-        return True
+        return True 
 
     def conectados(self, a, b):
         return self.find(a) == self.find(b)
-```
 
+    def __repr__(self):
+        return str(self.padre)
+
+```
 
 ## 2.2 La demo paso a paso
 
