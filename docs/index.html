@@ -348,17 +348,21 @@ function dots(n){
 }
 
 /* ---------- Modo libre ---------- */
-let free={uf:new UnionFind(6), prev:null, log:[["h","uf = UnionFind(6)"],["s",""]], n0:0, last:null};
-free.log[1][1]=estado(free.uf);
+function newFree(){ const f={uf:new UnionFind(6), prev:null, log:[["h","uf = UnionFind(6)"],["s",""]], n0:0, last:null, cables:Array(8).fill("p")};
+  f.log[1][1]=estado(f.uf); return f; }
+let free=newFree();
 function renderFree(){
   document.getElementById("stage").classList.remove("one"); document.getElementById("netView").hidden=false;
-  document.getElementById("cablesBox").innerHTML="";
-  drawNet(document.getElementById("net"), null, -1, free.uf.padre, false);
+  drawNet(document.getElementById("net"), free.cables, -1, free.uf.padre, false);
+  const n=free.cables.filter(c=>c==="a").length, uno=free.uf.conjuntos===1;
+  document.getElementById("cablesBox").innerHTML=
+    `<div class="summary"><span>cables instalados: <span class="big">${n}</span></span><span>conjuntos = <span class="big" style="color:${uno?COL.green:COL.ink}">${free.uf.conjuntos}</span></span></div>`+
+    (uno?`<div class="summary" style="color:${COL.green};font-weight:700">✓ Las 6 computadoras están conectadas.</div>`:"");
   const rings={}; if(free.last) free.last.focus.forEach(c=>rings[c]=COL[free.last.color]);
   drawForest(document.getElementById("forest"), free.uf.padre, free.prev&&free.prev.padre, rings);
   drawTable(free.uf, free.prev);
-  setSide(free.last || {tag:"Libre", color:"violet", op:"UnionFind(6)", desc:"Elige dos computadoras y prueba union, conectados o find. La red de arriba solo sirve de referencia: los colores indican a qué conjunto pertenece cada una.",
-    th:["Prueba esto","Une A con B y C con D, luego B con D. Después haz find(D): verás la compresión. Al final intenta union(A, C): devolverá False."]});
+  setSide(free.last || {tag:"Libre", color:"violet", op:"UnionFind(6)", desc:"Elige dos computadoras y prueba union, conectados o find. Cada union que aceptes sobre un cable de la red lo instala (verde); si cierra un ciclo, se marca en rojo.",
+    th:["Prueba esto","Instala A–B, D–F, B–D y E–F, y luego haz find(F): verás la compresión. Intenta union(D, E): devolverá False porque cerraría un ciclo. Con A–C las 6 computadoras quedan en un solo conjunto."]});
   drawConsole(free.log, free.n0);
 }
 COL.violet="#7c3aed";
@@ -366,7 +370,10 @@ function freeOp(op){
   const a=document.getElementById("fa").value, b=document.getElementById("fb").value, uf=free.uf;
   free.prev=clone(uf); free.n0=free.log.length; let r, desc, color, th, focus=[a,b];
   if(op==="union"){ const ra=N[uf.find(ID[a])], rb=N[uf.find(ID[b])]; r=uf.union(ID[a],ID[b]);
+    const ci=CABLES.findIndex(([w,u,v])=>(u===a&&v===b)||(u===b&&v===a));
+    if(ci>=0){ if(r) free.cables[ci]="a"; else if(free.cables[ci]==="p") free.cables[ci]="r"; }
     desc = r?`find(${a}) = ${ra} y find(${b}) = ${rb}: raíces distintas, se unen.`:`find(${a}) = find(${b}) = ${ra}: ya estaban en el mismo conjunto.`;
+    if(ci<0) desc += ` ${a}–${b} no es un cable de la red: se juntan los conjuntos, pero no se dibuja ningún cable.`;
     color=r?"blue":"red"; th=r?["Unión por rango","La raíz de menor rango cuelga de la de mayor; si empatan, la elegida sube su rango."]:["Ciclo","Misma raíz: en un grafo esta arista cerraría un ciclo."];
     free.log.push([r?"h":"f",`union(${a}, ${b}) -> ${py(r)}`],["s",estado(uf)]); free.last={tag:"Libre",op:`union(${a}, ${b})`,result:r,desc,color,th,focus}; }
   else if(op==="conectados"){ r=uf.conectados(ID[a],ID[b]);
@@ -388,7 +395,7 @@ document.getElementById("next").onclick=()=>{ k++; render(); };
 document.getElementById("prev").onclick=()=>{ k--; render(); };
 document.getElementById("reset").onclick=()=>{ k=0; render(); };
 document.querySelectorAll("[data-op]").forEach(b=>b.onclick=()=>freeOp(b.dataset.op));
-document.getElementById("freeReset").onclick=()=>{ free={uf:new UnionFind(6),prev:null,log:[["h","uf = UnionFind(6)"],["s",""]],n0:0,last:null}; free.log[1][1]=estado(free.uf); renderFree(); };
+document.getElementById("freeReset").onclick=()=>{ free=newFree(); renderFree(); };
 ["fa","fb"].forEach((id,j)=>{ const s=document.getElementById(id); [...N].forEach(c=>{ const o=document.createElement("option"); o.textContent=c; s.appendChild(o); }); s.value= j? "B":"A"; });
 document.addEventListener("keydown",e=>{ if(mode==="free"||e.target.tagName==="SELECT") return;
   const max = mode==="uf"?UF_STATES.length:KSTEPS.length;
