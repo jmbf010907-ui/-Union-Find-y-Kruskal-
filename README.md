@@ -5,6 +5,8 @@
 **Estructuras de Datos y Algoritmos II** · Semestre 2027-1 · Exposiciones finales, Tema 4
 **Profesor:** Daniel Vargas
 
+** Presentacion : https://canva.link/bp6d7y4sz90zyc5 ** 
+
 ---
 
 ## Integrantes
