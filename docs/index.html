@@ -159,31 +159,39 @@ class UnionFind {
 }
 const estado = uf => `   padre = [${uf.padre.map(p=>N[p]).join(", ")}]   rango = [${uf.rango.join(", ")}]   conjuntos = ${uf.conjuntos}`;
 
-/* ---------- Sección 1: los 7 pasos de union_find.py ---------- */
+/* ---------- Sección 1: instalar los primeros cables (union_find.py) ---------- */
+const sts = (nOk, rej) => { const st = Array(8).fill("p"); for(let i=0;i<nOk;i++) st[i]="a"; if(rej!==undefined) st[rej]="r"; return st; };
 const UF_STEPS = [
-  {op:"UnionFind(6)", tag:"Paso 0", color:"blue", desc:"Seis computadoras sin cables: cada una es su propio conjunto.",
-   th:["Inicio","Cada elemento es su propio padre. <code>padre[x] == x</code> significa que x es raíz, y la raíz representa a todo su conjunto."],
-   run:(uf,log)=>{ log.push(["h","Paso 0  UnionFind(6)"],["s",estado(uf)]); }},
-  {op:"union(A, B)", tag:"Paso 1", color:"blue", desc:"find(A) = A y find(B) = B: raíces distintas, se unen. Rangos iguales: B cuelga de A y rango[A] sube a 1.",
-   th:["Unión por rango","union une raíces. La raíz de menor rango cuelga de la de mayor; si empatan, se elige una y su rango sube 1. Así los árboles se mantienen bajos."],
-   run:(uf,log)=>{ const r=uf.union(0,1); log.push(["h",`Paso 1  union(A, B) -> ${py(r)}`],["s",estado(uf)]); return r; }},
-  {op:"union(D, F)", tag:"Paso 2", color:"blue", desc:"El mismo caso en otro grupo: F cuelga de D y rango[D] sube a 1.",
-   th:["Cada union resta un conjunto","Cada union exitosa reduce <code>conjuntos</code> en 1. Ahora hay dos árboles de altura 1: {A, B} y {D, F}."],
-   run:(uf,log)=>{ const r=uf.union(3,5); log.push(["h",`Paso 2  union(D, F) -> ${py(r)}`],["s",estado(uf)]); return r; }},
-  {op:"union(B, D)", tag:"Paso 3", color:"blue", desc:"find(B) = A y find(D) = D. Rangos iguales (1 y 1): el árbol de D cuelga de A y rango[A] sube a 2.",
-   th:["Se unen raíces, no elementos","Aunque pedimos unir B con D, quienes se conectan son sus raíces A y D. F queda a dos saltos de la raíz: F → D → A."],
-   run:(uf,log)=>{ const r=uf.union(1,3); log.push(["h",`Paso 3  union(B, D) -> ${py(r)}`],["s",estado(uf)]); return r; }},
-  {op:"find(F)", tag:"Paso 4", color:"amber", desc:"F sube por D hasta A. Al regresar de la recursión, F queda apuntando directo a la raíz.",
-   th:["Compresión de caminos","<code>padre[x] = find(padre[x])</code>: cada nodo del camino queda apuntando a la raíz. El árbol se aplana y el siguiente find(F) es inmediato."],
-   run:(uf,log)=>{ const r=uf.find(5); log.push(["f",`Paso 4  find(F) -> ${N[r]}   (compresión: F ahora apunta directo a A)`],["s",estado(uf)]); return N[r]; }},
-  {op:"conectados(B, F)", tag:"Paso 5", color:"green", desc:"find(B) = A y find(F) = A: misma raíz, misma red → True. En cambio conectados(A, E): A ≠ E → False.",
-   th:["Mismo conjunto ⇔ misma raíz","No se recorre la red: basta con dos find() y comparar. Esto es lo que Kruskal pregunta antes de comprar cada cable."],
-   run:(uf,log)=>{ const r=uf.conectados(1,5), r2=uf.conectados(0,4); log.push(["p",`Paso 5  conectados(B, F) -> ${py(r)}`],["f",`        conectados(A, E) -> ${py(r2)}`]); return r; }},
-  {op:"union(B, F)", tag:"Paso 6", color:"red", desc:"B y F ya tienen la misma raíz: union no cambia nada y devuelve False.",
-   th:["Detectar ciclos","Si <code>find(a) == find(b)</code>, ya había un camino entre a y b. En un grafo, esa arista cerraría un ciclo. Kruskal usa exactamente este False."],
-   run:(uf,log)=>{ const r=uf.union(1,5); log.push(["f",`Paso 6  union(B, F) -> ${py(r)}   (misma raíz: sería un ciclo)`],["s",estado(uf)]); return r; }},
+  {op:"UnionFind(6)", tag:"Paso 0", color:"blue", st:sts(0), cur:-1, focus:[],
+   desc:"Seis computadoras y ningún cable instalado todavía: cada una es su propio conjunto.",
+   th:["Inicio","<code>padre[x] == x</code> significa que x es raíz, y la raíz representa a todo su grupo. Al inicio hay 6 grupos de uno."],
+   run:(uf,log)=>{ log.push(["h","Paso 0  UnionFind(6)   ningún cable instalado"],["s",estado(uf)]); }},
+  {op:"cable A–B · union(A, B)", tag:"Paso 1", color:"blue", st:sts(1), cur:0, focus:["A","B"],
+   desc:"find(A) = A y find(B) = B: raíces distintas, así que el cable se instala.",
+   th:["Unión por rango","Instalar un cable es un <code>union</code>. La raíz de menor rango cuelga de la de mayor; si empatan, la elegida sube su rango en 1. Así los árboles no crecen de alto."],
+   run:(uf,log)=>{ const r=uf.union(0,1); log.push(["h",`Paso 1  cable A-B (1)   union(A, B) -> ${py(r)}`],["s",estado(uf)]); return r; }},
+  {op:"cable D–F · union(D, F)", tag:"Paso 2", color:"blue", st:sts(2), cur:1, focus:["D","F"],
+   desc:"Otro par sin conectar: F cuelga de D y rango[D] sube a 1.",
+   th:["Un bosque, no un árbol","{A, B} y {D, F} son grupos separados. La red crece como un bosque que después se junta. Cada union exitosa baja <code>conjuntos</code> en 1."],
+   run:(uf,log)=>{ const r=uf.union(3,5); log.push(["h",`Paso 2  cable D-F (2)   union(D, F) -> ${py(r)}`],["s",estado(uf)]); return r; }},
+  {op:"cable B–D · union(B, D)", tag:"Paso 3", color:"blue", st:sts(3), cur:2, focus:["B","D"],
+   desc:"find(B) = A y find(D) = D. Rangos iguales (1 y 1): el árbol de D entero cuelga de A.",
+   th:["Se unen raíces, no elementos","El cable es B–D, pero quienes se conectan son sus raíces A y D. rango[A] sube a 2 y F queda a dos saltos de la raíz."],
+   run:(uf,log)=>{ const r=uf.union(1,3); log.push(["h",`Paso 3  cable B-D (3)   union(B, D) -> ${py(r)}`],["s",estado(uf)]); return r; }},
+  {op:"cable E–F · union(E, F)", tag:"Paso 4", color:"amber", st:sts(4), cur:3, focus:["E","F"],
+   desc:"find(F) sube F → D → A y comprime el camino. Como rango[E] = 0 < 2, E cuelga de A.",
+   th:["Compresión de caminos","<code>padre[x] = find(padre[x])</code>: al volver de la recursión, cada nodo del camino queda apuntando a la raíz. El árbol se aplana solo."],
+   run:(uf,log)=>{ const r=uf.union(4,5); log.push(["h",`Paso 4  cable E-F (4)   union(E, F) -> ${py(r)}   (find(F): F -> D -> A y comprime)`],["s",estado(uf)]); return r; }},
+  {op:"¿ya están conectadas?", tag:"Paso 5", color:"green", st:sts(4), cur:-1, focus:["B","E"],
+   desc:"conectados(B, E) → True, porque las dos llegan a la raíz A. conectados(A, C) → False.",
+   th:["Mismo grupo ⇔ misma raíz","Para saber si dos computadoras ya están conectadas no se recorre la red: basta con dos find() y comparar. Esto es lo que Kruskal pregunta por cada cable."],
+   run:(uf,log)=>{ const r=uf.conectados(1,4), r2=uf.conectados(0,2);
+     log.push(["h","Paso 5  ¿ya están conectadas?"],["p",`        conectados(B, E) -> ${py(r)}`],["f",`        conectados(A, C) -> ${py(r2)}`]); return r; }},
+  {op:"cable D–E · union(D, E)", tag:"Paso 6", color:"red", st:sts(4,4), cur:4, focus:["D","E"],
+   desc:"find(D) = find(E) = A: ya hay camino D–F–E, así que este cable cerraría un ciclo y se descarta.",
+   th:["Detectar ciclos","Si <code>find(a) == find(b)</code>, union no cambia nada y devuelve False. Kruskal usa justo ese False para saber qué cable sobra."],
+   run:(uf,log)=>{ const r=uf.union(3,4); log.push(["f",`Paso 6  cable D-E (5)   union(D, E) -> ${py(r)}   (misma raíz: sería un ciclo)`],["s",estado(uf)]); return r; }},
 ];
-const UF_FOCUS = [[],["A","B"],["D","F"],["B","D"],["F"],["B","F","E"],["B","F"]];
 
 /* ---------- Sección 2: Kruskal (kruskal.py) ---------- */
 function kruskalTrace(){
@@ -311,9 +319,11 @@ function render(){
   document.getElementById("stepControls").hidden = mode==="free";
   document.getElementById("freeControls").hidden = mode!=="free";
   if(mode==="uf"){
-    stage.classList.add("one"); netView.hidden=true; document.getElementById("cablesBox").innerHTML="";
+    stage.classList.remove("one"); netView.hidden=false; document.getElementById("cablesBox").innerHTML="";
     const s=UF_STATES[k], rings={};
-    (UF_FOCUS[k]||[]).forEach(c=>rings[c]= s.color==="red"?COL.red : (k===5&&c==="E")?COL.red : s.color==="green"?COL.green:COL.amber);
+    (s.focus||[]).forEach(c=>rings[c]= s.color==="red"?COL.red : s.color==="green"?COL.green : COL.amber);
+    if(k===5) rings["C"]=COL.red;
+    drawNet(document.getElementById("net"), s.st, s.cur, k? s.uf.padre : s.uf.padre, false);
     drawForest(document.getElementById("forest"), s.uf.padre, s.prev&&s.prev.padre, rings);
     drawTable(s.uf, s.prev); setSide(s); drawConsole(s.log, s.n0); dots(UF_STATES.length);
   } else if(mode==="k"){

@@ -62,7 +62,7 @@ def node(c, p, label, col, r=46, ring=None):
     if ring: c.circle(p, r + 13, outline=ring, w=7)
     c.circle((p[0] + 4, p[1] + 6), r, fill=(214, 224, 242))
     c.circle(p, r, fill=col, outline=(255, 255, 255), w=4)
-    c.text(p, label, "black", 40, (255, 255, 255), "mm")
+    c.text(p, label, "black", max(20, int(r * 0.87)), (255, 255, 255), "mm")
 
 def self_loop(c, p, r, col):
     cx, cy, rr = p[0] + r * 0.62, p[1] - r * 0.92, r * 0.42
@@ -128,55 +128,7 @@ def pill(c, txt, fg, bg, right=1520, y=64):
     bw = c.tw(txt, "bold", 30) + 56
     c.rect((right - bw, y, right, y + 52), 26, fill=bg); c.text((right - bw / 2, y + 26), txt, "bold", 30, fg, "mm")
 
-# ================= Sección 1 · Union-Find =================
-def uf_step(name, paso, titulo, sub, par, rk, teoria, changed=(), conj=None, rings=None, ghost=None,
-            hot_edge=None, badge=None, color=BLUE):
-    c = Canvas(); header(c, paso, titulo, sub, color)
-    pos = layout(par, 110, 1040, 290, 120); rings = rings or {}
-    if ghost:
-        a, b = ghost; c.arrow(pos[a], pos[b], 50, 52, 4, (176, 190, 214), dash=10)
-    for i in range(6):
-        if par[i] != i:
-            hot = hot_edge == (i, par[i])
-            c.arrow(pos[i], pos[par[i]], 50, 52, 6 if hot else 4.5, AMBER if hot else (70, 92, 128))
-    for i in range(6):
-        if par[i] == i: self_loop(c, pos[i], 46, (120, 140, 175))
-        node(c, pos[i], NAMES[i], SET[root(par, i)], ring=rings.get(i))
-    card(c, (1090, 220, 1530, 600), "Teoría", teoria, color)
-    arrays(c, par, rk, changed, y=630, conj=conj)
-    if badge: pill(c, *badge)
-    c.save(name)
-
-T = "s1_"
-uf_step(T + "paso0.png", "Paso 0", "UnionFind(6)", "Seis computadoras sin cables: cada una es su propio conjunto.",
-        [0, 1, 2, 3, 4, 5], [0] * 6,
-        ["Cada elemento empieza", "siendo su propio padre.", "", "padre[x] == x", "  → x es raíz", "", "La raíz representa", "a todo su conjunto."], conj=6)
-uf_step(T + "paso1.png", "Paso 1", "union(A, B)", "find(A) = A y find(B) = B: raíces distintas, se unen.",
-        [0, 0, 2, 3, 4, 5], [1, 0, 0, 0, 0, 0],
-        ["union(a, b) une raíces.", "", "Unión por rango:", "la raíz de menor rango", "cuelga de la mayor.", "Empate → la elegida", "sube su rango en 1."],
-        {(0, 1), (1, 0)}, 5, {0: AMBER, 1: AMBER}, hot_edge=(1, 0))
-uf_step(T + "paso2.png", "Paso 2", "union(D, F)", "El mismo caso en otro grupo: F cuelga de D y rango[D] sube a 1.",
-        [0, 0, 2, 3, 4, 3], [1, 0, 0, 1, 0, 0],
-        ["Cada union exitosa", "reduce los conjuntos", "en 1.", "", "Ahora hay dos árboles", "de altura 1: {A, B}", "y {D, F}."],
-        {(0, 5), (1, 3)}, 4, {3: AMBER, 5: AMBER}, hot_edge=(5, 3))
-uf_step(T + "paso3.png", "Paso 3", "union(B, D)", "find(B) = A y find(D) = D. Rangos iguales (1 y 1): D cuelga de A.",
-        [0, 0, 2, 0, 4, 3], [2, 0, 0, 1, 0, 0],
-        ["Se unen las raíces,", "no los elementos.", "", "  B → A    D → D", "", "rango[A] sube a 2.", "F queda a 2 saltos", "de la raíz."],
-        {(0, 3), (1, 0)}, 3, {0: AMBER, 3: AMBER}, hot_edge=(3, 0))
-uf_step(T + "paso4.png", "Paso 4", "find(F)", "F → D → A. Al regresar, F queda apuntando directo a la raíz A.",
-        [0, 0, 2, 0, 4, 0], [2, 0, 0, 1, 0, 0],
-        ["Compresión de caminos:", "find sube a la raíz y", "al volver de la", "recursión deja a cada", "nodo apuntando a ella.", "", "El árbol se aplana:", "el próximo find es O(1)."],
-        {(0, 5)}, 3, {5: AMBER, 0: AMBER}, ghost=(5, 3), hot_edge=(5, 0), color=AMBER)
-uf_step(T + "paso5.png", "Paso 5", "conectados(B, F)", "find(B) = A y find(F) = A: misma raíz, misma red. conectados(A, E) → False.",
-        [0, 0, 2, 0, 4, 0], [2, 0, 0, 1, 0, 0],
-        ["Mismo conjunto ⇔", "misma raíz.", "", "  B → A = A ← F  ✓", "  A → A ≠ E ← E  ✗", "", "No se recorre la red:", "solo dos find()."],
-        set(), 3, {1: GREEN, 5: GREEN, 4: RED}, badge=("True", GREEN, GREEN_BG), color=GREEN)
-uf_step(T + "paso6.png", "Paso 6", "union(B, F)", "Ya tienen la misma raíz: no cambia nada y devuelve False.",
-        [0, 0, 2, 0, 4, 0], [2, 0, 0, 1, 0, 0],
-        ["find(a) == find(b)", "  → return False", "", "Ya había camino entre", "B y F: este cable", "cerraría un ciclo.", "", "Esto usa Kruskal →"],
-        set(), 3, {1: RED, 5: RED}, badge=("False · ciclo", RED, RED_BG), color=RED)
-
-# ================= Sección 2 · Kruskal =================
+# ================= La red: datos compartidos por las dos secciones =================
 CAB = [(0, 1, 1), (3, 5, 2), (1, 3, 3), (4, 5, 4), (3, 4, 5), (0, 2, 6), (2, 4, 7), (1, 2, 8)]
 GRID = {0: (0, 0), 2: (1, 0), 4: (2, 0), 1: (0, 1), 3: (1, 1), 5: (2, 1)}   # A C E arriba, B D F abajo
 
@@ -196,23 +148,24 @@ def kstate(k):
         else: st[i] = "r"
     return par, rk, st, total, info
 
-def draw_net(c, st, k=-1, gx=150, gy=300, dx=260, dy=230, colors=None, labels=True, accepted_only=False):
+def draw_net(c, st, k=-1, gx=150, gy=300, dx=260, dy=230, colors=None, labels=True, accepted_only=False, r=46, lw=1.0):
     gp = lambda i: (gx + GRID[i][0] * dx, gy + GRID[i][1] * dy)
     for i, (a, b, w) in enumerate(CAB):
         A, B = gp(a), gp(b); s = st[i] if st else "p"
         if accepted_only and s != "a": continue
-        if i == k: c.line(A, B, 26, (253, 230, 170))
-        if s == "a": c.line(A, B, 10, GREEN)
-        elif s == "r": c.line(A, B, 5, RED, dash=14)
-        else: c.line(A, B, 4, (180, 192, 214))
+        if i == k: c.line(A, B, 26 * lw, (253, 230, 170))
+        if s == "a": c.line(A, B, 10 * lw, GREEN)
+        elif s == "r": c.line(A, B, 5 * lw, RED, dash=14)
+        else: c.line(A, B, 4 * lw, (180, 192, 214))
         if labels:
             t = 0.5 if a != 1 or b != 2 else 0.32
             mx, my = A[0] + (B[0] - A[0]) * t, A[1] + (B[1] - A[1]) * t
-            c.rect((mx - 24, my - 21, mx + 24, my + 21), 11, fill=CARD, outline=GREEN if s == "a" else LINE, w=2)
-            c.text((mx, my), str(w), "bold", 25, INK, "mm")
+            c.rect((mx - 24 * lw, my - 21 * lw, mx + 24 * lw, my + 21 * lw), 11, fill=CARD,
+                   outline=GREEN if s == "a" else LINE, w=2)
+            c.text((mx, my), str(w), "bold", int(25 * lw), INK, "mm")
     for i in range(6):
         ring = AMBER if k >= 0 and i in CAB[k][:2] else None
-        node(c, gp(i), NAMES[i], colors[i] if colors else (120, 136, 168), ring=ring)
+        node(c, gp(i), NAMES[i], colors[i] if colors else (120, 136, 168), r=r, ring=ring)
     return gp
 
 def edge_list(c, st, k, x0=800, y0=240, x1=1120):
@@ -225,6 +178,91 @@ def edge_list(c, st, k, x0=800, y0=240, x1=1120):
         c.text((x0, y), f"{NAMES[a]}–{NAMES[b]}", "mono", 28, col, "lm"); c.text((x0 + 120, y), f"{w}", "monor", 28, MUTED, "lm")
         c.text((x1 - 34, y), "✓" if s == "a" else "✗" if s == "r" else "", "bold", 28, col, "rm")
 
+
+# ================= Sección 1 · Union-Find =================
+# Union-Find sobre la MISMA red: instalar los primeros cables, uno por uno.
+def uf_step(name, paso, titulo, sub, par, rk, teoria, st, cur, changed=(), conj=None,
+            rings=None, ghost=None, hot_edge=None, badge=None, color=BLUE):
+    c = Canvas(); header(c, paso, titulo, sub, color)
+    cols = [SET[root(par, i)] for i in range(6)]
+
+    # --- izquierda: la red ---
+    c.text((92, 205), "LA RED", "bold", 20, MUTED, "lm")
+    c.rect((90, 225, 640, 520), 22, fill=CARD, outline=LINE, w=1.5)
+    draw_net(c, st, cur, gx=215, gy=320, dx=160, dy=130, colors=cols, r=32, lw=0.78)
+
+    # --- derecha: el bosque de Union-Find ---
+    c.text((692, 205), "LOS CONJUNTOS  ·  flecha = padre", "bold", 20, MUTED, "lm")
+    pos = layout(par, 700, 1520, 285, 110); rings = rings or {}
+    if ghost:
+        a, b = ghost; c.arrow(pos[a], pos[b], 48, 50, 4, (176, 190, 214), dash=10)
+    for i in range(6):
+        if par[i] != i:
+            hot = hot_edge == (i, par[i])
+            c.arrow(pos[i], pos[par[i]], 48, 50, 6 if hot else 4.5, AMBER if hot else (70, 92, 128))
+    for i in range(6):
+        if par[i] == i: self_loop(c, pos[i], 44, (120, 140, 175))
+        node(c, pos[i], NAMES[i], cols[i], r=44, ring=rings.get(i))
+
+    card(c, (90, 545, 640, 866), "Teoría", teoria, color, sz=24, gap=36)
+    arrays(c, par, rk, changed, y=600, conj=conj, x0=748, cw=86)
+    if badge: pill(c, *badge)
+    c.save(name)
+
+P0 = ["p"] * 8
+def sts(n_ok, rechazado=None):
+    st = ["p"] * 8
+    for i in range(n_ok): st[i] = "a"
+    if rechazado is not None: st[rechazado] = "r"
+    return st
+
+T = "s1_"
+uf_step(T + "paso0.png", "Paso 0", "UnionFind(6)",
+        "Seis computadoras y ningún cable instalado todavía.",
+        [0, 1, 2, 3, 4, 5], [0] * 6,
+        ["Ningún cable instalado:", "cada computadora es su", "propio conjunto.", "",
+         "  padre[x] == x  →  x es raíz"],
+        P0, -1, conj=6)
+uf_step(T + "paso1.png", "Paso 1", "cable A–B  ·  union(A, B)",
+        "find(A) = A y find(B) = B: raíces distintas, el cable se instala.",
+        [0, 0, 2, 3, 4, 5], [1, 0, 0, 0, 0, 0],
+        ["Instalar un cable = union.", "", "Unión por rango: la raíz de", "menor rango cuelga de la de",
+         "mayor; si empatan, la elegida", "sube su rango en 1."],
+        sts(1), 0, {(0, 1), (1, 0)}, 5, {0: AMBER, 1: AMBER}, hot_edge=(1, 0))
+uf_step(T + "paso2.png", "Paso 2", "cable D–F  ·  union(D, F)",
+        "Otro par sin conectar: F cuelga de D y rango[D] sube a 1.",
+        [0, 0, 2, 3, 4, 3], [1, 0, 0, 1, 0, 0],
+        ["La red crece como un bosque,", "no como un solo árbol:", "{A, B} y {D, F} van aparte.", "",
+         "Cada union exitosa baja", "conjuntos en 1."],
+        sts(2), 1, {(0, 5), (1, 3)}, 4, {3: AMBER, 5: AMBER}, hot_edge=(5, 3))
+uf_step(T + "paso3.png", "Paso 3", "cable B–D  ·  union(B, D)",
+        "find(B) = A y find(D) = D. Rangos iguales (1 y 1): el árbol de D cuelga de A.",
+        [0, 0, 2, 0, 4, 3], [2, 0, 0, 1, 0, 0],
+        ["El cable es B–D, pero quienes", "se conectan son sus raíces:", "  B → A        D → D", "",
+         "rango[A] sube a 2 y F queda", "a dos saltos de la raíz."],
+        sts(3), 2, {(0, 3), (1, 0)}, 3, {0: AMBER, 3: AMBER}, hot_edge=(3, 0))
+uf_step(T + "paso4.png", "Paso 4", "cable E–F  ·  union(E, F)",
+        "find(F) sube F → D → A y comprime. Como rango[E] = 0 < 2, E cuelga de A.",
+        [0, 0, 2, 0, 0, 0], [2, 0, 0, 1, 0, 0],
+        ["Compresión de caminos:", "find(F) recorre F → D → A y", "al volver deja a F apuntando", "directo a la raíz.", "",
+         "El árbol se aplana solo."],
+        sts(4), 3, {(0, 4), (0, 5)}, 2, {4: AMBER, 5: AMBER}, ghost=(5, 3), hot_edge=(5, 0), color=AMBER)
+uf_step(T + "paso5.png", "Paso 5", "¿ya están conectadas?",
+        "conectados(B, E) → True.   conectados(A, C) → False.",
+        [0, 0, 2, 0, 0, 0], [2, 0, 0, 1, 0, 0],
+        ["Mismo conjunto ⇔ misma raíz.", "", "  B → A  =  A ← E   ✓", "  A → A  ≠  C ← C   ✗", "",
+         "No se recorre la red: dos find()."],
+        sts(4), -1, set(), 2, {1: GREEN, 4: GREEN, 2: RED},
+        badge=("True", GREEN, GREEN_BG), color=GREEN)
+uf_step(T + "paso6.png", "Paso 6", "cable D–E  ·  union(D, E)",
+        "find(D) = find(E) = A: el cable cerraría un ciclo, así que se descarta.",
+        [0, 0, 2, 0, 0, 0], [2, 0, 0, 1, 0, 0],
+        ["Ya hay camino D – F – E,", "así que este cable sobra.", "", "  find(a) == find(b)", "    → return False", "",
+         "Kruskal usa justo este False."],
+        sts(4, 4), 4, set(), 2, {3: RED, 4: RED},
+        badge=("False · ciclo", RED, RED_BG), color=RED)
+
+# ================= Sección 2 · Kruskal =================
 def k_step(name, k, paso, titulo, sub, teoria, color, changed=()):
     c = Canvas(); header(c, paso, titulo, sub, color)
     par, rk, st, total, _ = kstate(k)
@@ -239,7 +277,7 @@ def k_step(name, k, paso, titulo, sub, teoria, color, changed=()):
     c.save(name)
 
 T = "s2_"
-k_step(T + "paso0.png", -1, "Paso 0", "ordenar los cables", "Se ordenan los 8 cables de menor a mayor costo. Nadie está conectado todavía.",
+k_step(T + "paso0.png", -1, "Paso 0", "ordenar los cables", "Volvemos a empezar, pero ahora el orden lo decide el algoritmo: del cable más barato al más caro.",
        ["Kruskal es voraz:", "", "1. ordenar por peso", "2. tomar el cable si", "   no forma ciclo", "3. parar con V − 1", "   cables (aquí 5)", "", "Para 2 usa Union-Find."], BLUE)
 k_step(T + "paso1.png", 0, "Paso 1", "A–B (1)", "find(A) = A, find(B) = B. Raíces distintas: se acepta y union(A, B).",
        ["Raíces distintas", "  → no hay camino", "  entre A y B.", "", "Se acepta el cable", "y union los junta.", "", "Es el paso 1 de la", "sección 1."], GREEN, {(0, 1)})
@@ -248,9 +286,9 @@ k_step(T + "paso2.png", 1, "Paso 2", "D–F (2)", "find(D) = D, find(F) = F. Ra�
 k_step(T + "paso3.png", 2, "Paso 3", "B–D (3)", "find(B) = A, find(D) = D. Raíces distintas: se unen los dos grupos.",
        ["Une {A, B} con {D, F}.", "", "Rangos 1 y 1:", "D cuelga de A y", "rango[A] = 2.", "", "Mismo resultado que", "el paso 3 de la", "sección 1."], GREEN, {(0, 3)})
 k_step(T + "paso4.png", 3, "Paso 4", "E–F (4)", "find(E) = E, find(F) = A (y F se comprime). Raíces distintas: se acepta.",
-       ["find(F): F → D → A", "y comprime: F → A.", "", "rango[E] = 0 < 2:", "E cuelga de A.", "", "Ya hay 4 cables."], GREEN, {(0, 4), (0, 5)})
+       ["find(F): F → D → A", "y comprime: F → A.", "", "rango[E] = 0 < 2:", "E cuelga de A.", "", "Es el paso 4 de la", "sección 1."], GREEN, {(0, 4), (0, 5)})
 k_step(T + "paso5.png", 4, "Paso 5", "D–E (5)", "find(D) = A y find(E) = A. Misma raíz: el cable cerraría un ciclo, se descarta.",
-       ["Ya hay camino:", "  D – F – E", "", "union devuelve False", "  → se rechaza.", "", "Sin Union-Find habría", "que recorrer la red."], RED)
+       ["Ya hay camino:", "  D – F – E", "", "union devuelve False", "  → se rechaza.", "", "Es el paso 6 de la", "sección 1."], RED)
 k_step(T + "paso6.png", 5, "Paso 6", "A–C (6)", "find(A) = A, find(C) = C. Se acepta: ya son 5 cables = V − 1. Termina.",
        ["5 cables = V − 1", "  → árbol completo.", "", "C–E (7) y B–C (8)", "ni se revisan.", "", "Todas las raíces", "son A: un conjunto."], GREEN, {(0, 2)})
 
@@ -297,7 +335,7 @@ def portada(name, num, titulo, sub, items, col):
         c.text((175, y), it, "semi", 30, WHITE, "lm")
     c.save(name)
 portada("s1_portada.png", 1, "Union-Find", "¿Estas dos computadoras ya están conectadas?",
-        ["Teoría: conjuntos como árboles", "Paso a paso con A … F (7 pasos)", "Código y lo que imprime"], BLUE)
+        ["Teoría: cada grupo es un árbol", "Instalamos los primeros cables uno por uno", "Código y lo que imprime"], BLUE)
 portada("s2_portada.png", 2, "Kruskal", "¿Qué cables compro para conectarlas todas al menor costo?",
         ["Teoría: algoritmo voraz + Union-Find", "Paso a paso sobre la misma red (6 pasos)", "Resultado, código y lo que imprime"], GREEN)
 

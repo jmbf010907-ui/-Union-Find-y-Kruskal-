@@ -23,16 +23,17 @@ def test_compresion():
     uf = UnionFind(6)
     uf.union(ID["A"], ID["B"]); uf.union(ID["D"], ID["F"]); uf.union(ID["B"], ID["D"])
     assert uf.padre[ID["F"]] == ID["D"]          # F está a dos saltos de A
-    assert uf.find(ID["F"]) == ID["A"]
+    uf.union(ID["E"], ID["F"])                   # el cable E-F llama a find(F)
     assert uf.padre[ID["F"]] == ID["A"]          # después del find, apunta directo
 
 
 def test_conectados_y_ciclo():
     uf = UnionFind(6)
-    uf.union(ID["A"], ID["B"]); uf.union(ID["D"], ID["F"]); uf.union(ID["B"], ID["D"])
-    assert uf.conectados(ID["B"], ID["F"])
-    assert not uf.conectados(ID["A"], ID["E"])
-    assert uf.union(ID["B"], ID["F"]) is False   # cerraría un ciclo
+    for u, v in [("A", "B"), ("D", "F"), ("B", "D"), ("E", "F")]:
+        uf.union(ID[u], ID[v])
+    assert uf.conectados(ID["B"], ID["E"])
+    assert not uf.conectados(ID["A"], ID["C"])
+    assert uf.union(ID["D"], ID["E"]) is False   # el cable D-E cerraría un ciclo
 
 
 def test_kruskal():

@@ -92,8 +92,11 @@ costo. Hay que conectarlas todas gastando lo menos posible.
 
 Surgen dos preguntas:
 
-1. **¿Estas dos computadoras ya están conectadas?** La responde Union-Find (sección 1).
-2. **¿Qué cables compro?** La responde Kruskal, que usa Union-Find para no formar ciclos (sección 2).
+1. **¿Estas dos computadoras ya están conectadas?** La responde Union-Find.
+   En la **sección 1** instalamos cables a mano, uno por uno, para ver cómo funciona por dentro.
+2. **¿Qué cables compro para gastar lo menos posible?** La responde Kruskal.
+   En la **sección 2** es el algoritmo el que decide el orden, usando el mismo Union-Find
+   para no formar ciclos.
 
 En el código, `A..F` son los índices `0..5` (`ID = {"A": 0, "B": 1, ...}`).
 En las tablas, **en negrita** lo que cambia respecto al paso anterior.
@@ -104,14 +107,19 @@ En las tablas, **en negrita** lo que cambia respecto al paso anterior.
 
 ![Sección 1](media/s1_portada.png)
 
+En esta sección **instalamos cables a mano**, uno por uno, y vemos qué le pasa a la
+estructura por dentro. En la sección 2 será el algoritmo el que decida el orden.
+Las imágenes muestran siempre lo mismo: a la izquierda **la red**, a la derecha
+**los conjuntos** y abajo los arreglos `padre` y `rango`.
+
 ### Teoría
 
 ![Teoría de Union-Find](media/s1_teoria.png)
 
-- Cada conjunto es un **árbol**; su raíz es el representante.
+- Cada grupo de computadoras conectadas es un **árbol**; su raíz lo representa.
 - `padre[x]` guarda el padre de `x`. Si `padre[x] == x`, `x` es raíz.
-- `find(x)` sube hasta la raíz. `union(a, b)` cuelga una raíz de la otra.
-  `conectados(a, b)` compara `find(a)` con `find(b)`.
+- Instalar un cable es `union(a, b)`; preguntar si dos ya están conectadas es
+  `conectados(a, b)`, que compara `find(a)` con `find(b)`.
 - **Unión por rango:** el árbol bajo cuelga del alto, así la altura queda en `O(log n)`.
 - **Compresión de caminos:** `find` deja todo el camino apuntando a la raíz.
   Con las dos, cada operación cuesta `O(α(n))` amortizado.
@@ -154,26 +162,25 @@ class UnionFind:
 > (`_init_`), Python no lo reconoce como constructor y `UnionFind(6)` falla con
 > `TypeError: UnionFind() takes no arguments`.
 
-### Paso 0 · `UnionFind(6)`
+### Paso 0 · `UnionFind(6)` · ningún cable instalado
 
 ![Paso 0](media/s1_paso0.png)
 
-**Teoría:** cada elemento empieza siendo su propio padre. La raíz representa a
-todo su conjunto. Al inicio hay 6 conjuntos de un elemento.
+**Teoría:** cada computadora empieza siendo su propio padre y su propio grupo.
 
 | i | A | B | C | D | E | F | conjuntos |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
 | `padre` | A | B | C | D | E | F | **6** |
 | `rango` | 0 | 0 | 0 | 0 | 0 | 0 | |
 
-### Paso 1 · `union(A, B)`
+### Paso 1 · cable A–B (1) · `union(A, B)`
 
 ![Paso 1](media/s1_paso1.png)
 
 **Teoría (unión por rango):** `union` une raíces. La de menor rango cuelga de la
 de mayor; si empatan, se elige una y su rango sube 1.
 
-1. `find(A) = A` y `find(B) = B`. Raíces distintas.
+1. `find(A) = A` y `find(B) = B`. Raíces distintas, el cable sirve.
 2. `rango[A] = rango[B] = 0`: no hay intercambio.
 3. `padre[B] ← A` y, como empataron, `rango[A]` sube a `1`.
 
@@ -182,20 +189,20 @@ de mayor; si empatan, se elige una y su rango sube 1.
 | `padre` | A | **A** | C | D | E | F | **5** |
 | `rango` | **1** | 0 | 0 | 0 | 0 | 0 | |
 
-### Paso 2 · `union(D, F)`
+### Paso 2 · cable D–F (2) · `union(D, F)`
 
 ![Paso 2](media/s1_paso2.png)
 
-**Teoría:** cada `union` exitosa reduce `conjuntos` en 1. El mismo caso en otro
-grupo: `padre[F] ← D` y `rango[D]` sube a `1`. Ahora hay dos árboles de altura 1,
-`{A, B}` y `{D, F}`.
+**Teoría:** la red crece como un **bosque**, no como un solo árbol. `{A, B}` y
+`{D, F}` son dos grupos todavía separados, y cada `union` exitosa baja
+`conjuntos` en 1.
 
 | i | A | B | C | D | E | F | conjuntos |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
 | `padre` | A | A | C | D | E | **D** | **4** |
 | `rango` | 1 | 0 | 0 | **1** | 0 | 0 | |
 
-### Paso 3 · `union(B, D)` · se unen raíces, no elementos
+### Paso 3 · cable B–D (3) · `union(B, D)` · se unen raíces, no elementos
 
 ![Paso 3](media/s1_paso3.png)
 
@@ -218,41 +225,42 @@ grupo: `padre[F] ← D` y `rango[D]` sube a `1`. Ahora hay dos árboles de altur
 | `padre` | A | A | C | **A** | E | D | **3** |
 | `rango` | **2** | 0 | 0 | 1 | 0 | 0 | |
 
-### Paso 4 · `find(F)` · compresión de caminos
+### Paso 4 · cable E–F (4) · `union(E, F)` · compresión de caminos
 
 ![Paso 4](media/s1_paso4.png)
 
 **Teoría:** `padre[x] = find(padre[x])`. La recursión llega a la raíz y, al
 regresar, deja a cada nodo del camino apuntando a ella.
 
-`F` estaba a dos saltos: `F → D → A`. Después del `find`, `padre[F] = A`.
+1. `find(E) = E`.
+2. `find(F)` recorre `F → D → A` y de paso reescribe `padre[F] = A`.
+3. `rango[E] = 0 < rango[A] = 2`, así que `E` cuelga de `A` y ningún rango sube.
 
 | i | A | B | C | D | E | F | conjuntos |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| `padre` | A | A | C | A | E | **A** | 3 |
+| `padre` | A | A | C | A | **A** | **A** | **2** |
 | `rango` | 2 | 0 | 0 | 1 | 0 | 0 | |
 
-`conjuntos` no cambia porque los grupos son los mismos. `rango[A]` sigue en `2`
-aunque la altura real ya es `1`: el rango es una **cota** de la altura, no la
-altura exacta.
+`rango[A]` sigue en `2` aunque la altura real ya es `1`: el rango es una **cota**
+de la altura, no la altura exacta.
 
-### Paso 5 · `conectados(B, F)` y `conectados(A, E)`
+### Paso 5 · ¿ya están conectadas?
 
 ![Paso 5](media/s1_paso5.png)
 
-**Teoría:** dos elementos están en el mismo conjunto si y solo si tienen la misma
+**Teoría:** dos computadoras están en el mismo grupo si y solo si tienen la misma
 raíz. No se recorre la red, solo se hacen dos `find`.
 
-- `find(B) = A` y `find(F) = A`. Misma raíz: **`True`**.
-- `find(A) = A` y `find(E) = E`. Raíces distintas: **`False`**.
+- `conectados(B, E)`: `find(B) = A` y `find(E) = A`. Misma raíz: **`True`**.
+- `conectados(A, C)`: `find(A) = A` y `find(C) = C`. Raíces distintas: **`False`**.
 
-### Paso 6 · `union(B, F)` regresa `False`
+### Paso 6 · cable D–E (5) · `union(D, E)` regresa `False`
 
 ![Paso 6](media/s1_paso6.png)
 
-**Teoría:** si `find(a) == find(b)`, ya había un camino entre `a` y `b`. En un
-grafo, esa arista cerraría un **ciclo**. `union` corta en el primer `if` y
-regresa **`False`** sin tocar nada. Esto es justo lo que usa Kruskal.
+**Teoría:** `find(D) = find(E) = A`, así que ya existe el camino `D–F–E`. Este
+cable solo cerraría un **ciclo**: `union` corta en el primer `if` y regresa
+**`False`** sin tocar nada. Es exactamente la señal que usa Kruskal.
 
 ### Lo que imprime
 
@@ -260,20 +268,21 @@ regresa **`False`** sin tocar nada. Esto es justo lo que usa Kruskal.
 
 ```
 $ python src/union_find.py
-Paso 0  UnionFind(6)
+Paso 0  UnionFind(6)   ningún cable instalado
    padre = [A, B, C, D, E, F]   rango = [0, 0, 0, 0, 0, 0]   conjuntos = 6
-Paso 1  union(A, B) -> True
+Paso 1  cable A-B (1)   union(A, B) -> True
    padre = [A, A, C, D, E, F]   rango = [1, 0, 0, 0, 0, 0]   conjuntos = 5
-Paso 2  union(D, F) -> True
+Paso 2  cable D-F (2)   union(D, F) -> True
    padre = [A, A, C, D, E, D]   rango = [1, 0, 0, 1, 0, 0]   conjuntos = 4
-Paso 3  union(B, D) -> True
+Paso 3  cable B-D (3)   union(B, D) -> True
    padre = [A, A, C, A, E, D]   rango = [2, 0, 0, 1, 0, 0]   conjuntos = 3
-Paso 4  find(F) -> A   (compresión: F ahora apunta directo a A)
-   padre = [A, A, C, A, E, A]   rango = [2, 0, 0, 1, 0, 0]   conjuntos = 3
-Paso 5  conectados(B, F) -> True
-        conectados(A, E) -> False
-Paso 6  union(B, F) -> False   (misma raíz: sería un ciclo)
-   padre = [A, A, C, A, E, A]   rango = [2, 0, 0, 1, 0, 0]   conjuntos = 3
+Paso 4  cable E-F (4)   union(E, F) -> True   (find(F): F -> D -> A y comprime)
+   padre = [A, A, C, A, A, A]   rango = [2, 0, 0, 1, 0, 0]   conjuntos = 2
+Paso 5  ¿ya están conectadas?
+        conectados(B, E) -> True
+        conectados(A, C) -> False
+Paso 6  cable D-E (5)   union(D, E) -> False   (misma raíz: sería un ciclo)
+   padre = [A, A, C, A, A, A]   rango = [2, 0, 0, 1, 0, 0]   conjuntos = 2
 ```
 
 ---
@@ -339,7 +348,8 @@ cada computadora es su propio conjunto.
 ![Paso 1](media/s2_paso1.png)
 
 `find(A) = A`, `find(B) = B`. Raíces distintas: no hay camino entre ellas, así
-que se acepta y `union(A, B)` las junta. Es el paso 1 de la sección 1.
+que se acepta y `union(A, B)` las junta. Es literalmente el paso 1 de la sección 1:
+los tres cables más baratos son los mismos que instalamos a mano.
 
 ### Paso 2 · `D–F (2)` ✓
 
@@ -360,7 +370,8 @@ un **bosque** que se va uniendo, no como un solo árbol.
 ![Paso 4](media/s2_paso4.png)
 
 `find(E) = E`. `find(F)` recorre `F → D → A` y **comprime**: `F` queda apuntando
-a `A`. Como `rango[E] = 0 < rango[A] = 2`, `E` cuelga de `A`.
+a `A`. Como `rango[E] = 0 < rango[A] = 2`, `E` cuelga de `A`. Es el paso 4 de la
+sección 1.
 
 ### Paso 5 · `D–E (5)` ✗ ciclo
 
@@ -368,7 +379,7 @@ a `A`. Como `rango[E] = 0 < rango[A] = 2`, `E` cuelga de `A`.
 
 `find(D) = A` y `find(E) = A`. **Misma raíz**: `D` y `E` ya están conectados por
 `D–F–E`, así que este cable cerraría un ciclo. `union` regresa `False` y se
-descarta.
+descarta. Es el paso 6 de la sección 1.
 
 ### Paso 6 · `A–C (6)` ✓ y termina
 

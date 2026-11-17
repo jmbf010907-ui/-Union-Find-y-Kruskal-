@@ -44,21 +44,25 @@ def estado(uf):
 
 
 def demo():
+    """Instala los primeros cables de la red de 6 computadoras, uno por uno."""
     uf = UnionFind(6)
-    print("Paso 0  UnionFind(6)")
+    print("Paso 0  UnionFind(6)   ningún cable instalado")
     print(estado(uf))
 
-    print("Paso 1  union(A, B) ->", uf.union(ID["A"], ID["B"]))
+    print("Paso 1  cable A-B (1)   union(A, B) ->", uf.union(ID["A"], ID["B"]))
     print(estado(uf))
-    print("Paso 2  union(D, F) ->", uf.union(ID["D"], ID["F"]))
+    print("Paso 2  cable D-F (2)   union(D, F) ->", uf.union(ID["D"], ID["F"]))
     print(estado(uf))
-    print("Paso 3  union(B, D) ->", uf.union(ID["B"], ID["D"]))
+    print("Paso 3  cable B-D (3)   union(B, D) ->", uf.union(ID["B"], ID["D"]))
     print(estado(uf))
-    print("Paso 4  find(F) ->", NOMBRES[uf.find(ID["F"])], "  (compresión: F ahora apunta directo a A)")
+    print("Paso 4  cable E-F (4)   union(E, F) ->", uf.union(ID["E"], ID["F"]),
+          "  (find(F): F -> D -> A y comprime)")
     print(estado(uf))
-    print("Paso 5  conectados(B, F) ->", uf.conectados(ID["B"], ID["F"]))
-    print("        conectados(A, E) ->", uf.conectados(ID["A"], ID["E"]))
-    print("Paso 6  union(B, F) ->", uf.union(ID["B"], ID["F"]), "  (misma raíz: sería un ciclo)")
+    print("Paso 5  ¿ya están conectadas?")
+    print("        conectados(B, E) ->", uf.conectados(ID["B"], ID["E"]))
+    print("        conectados(A, C) ->", uf.conectados(ID["A"], ID["C"]))
+    print("Paso 6  cable D-E (5)   union(D, E) ->", uf.union(ID["D"], ID["E"]),
+          "  (misma raíz: sería un ciclo)")
     print(estado(uf))
     return uf
 
