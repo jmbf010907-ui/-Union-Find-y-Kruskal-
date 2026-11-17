@@ -9,10 +9,9 @@
 
 ## Integrantes
 
-> ✏️ **Por completar.** Nombre completo y número de cuenta de cada integrante.
 
-| Nombre | Número de cuenta | Parte de la exposición |
-|---|---|---|
+| Nombre                 | Número de cuenta | Parte de la exposición |
+|Bolaños Fuentes Juan Manuel|323257419|Demostracion y Analisis|
 | | | |
 | | | |
 | | | |
@@ -21,38 +20,13 @@
 
 ## Contenido
 
-1. [Teoría](#parte-1--teoría)
-2. [Demo](#parte-2--demo)
-3. [Análisis de resultados](#parte-3--análisis-de-resultados)
-4. [Conclusiones](#parte-4--conclusiones)
-5. [Referencias](#referencias)
-
+1. [Teoría]
+2. [Demo]
+3. [Análisis de resultados]
+4. [Conclusiones]
+5. [Referencias]
 ---
 
-## Cómo correrlo
-
-Requisitos: Python 3.10 o superior. Para las pruebas, `pytest`.
-
-```bash
-python src/union_find.py        # la demo paso a paso
-python src/benchmark.py 20000   # el experimento de la Parte 3
-pytest                          # las pruebas
-```
-
-```
--Union-Find-y-Kruskal-/
-├── README.md
-├── src/
-│   ├── union_find.py       # la estructura y la demo
-│   └── benchmark.py        # mide el efecto de las optimizaciones
-├── tests/
-│   └── test_union_find.py
-├── media/                  # diagramas
-└── tools/
-    └── gen_media.py        # genera los diagramas de media/
-```
-
----
 
 # Parte 1 · Teoría
 
@@ -100,9 +74,6 @@ class UnionFind:
         return self.find(a) == self.find(b)
 ```
 
-> **Ojo con `__init__`.** Lleva **dos** guiones bajos de cada lado. Con uno solo
-> (`_init_`), Python no lo reconoce como constructor y `UnionFind(6)` falla con
-> `TypeError: UnionFind() takes no arguments`. Lo mismo para `__repr__`.
 
 ## 2.2 La demo paso a paso
 
@@ -307,8 +278,6 @@ python src/benchmark.py 20000
 
 # Parte 4 · Conclusiones
 
-> ✏️ **Por completar.** Conclusiones del equipo: qué se aprendió, qué
-> mostraron los resultados y en qué casos conviene Kruskal frente a Prim.
 
 ---
 
