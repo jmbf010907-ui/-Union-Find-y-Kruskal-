@@ -71,6 +71,7 @@ Contexto:
 Un árbol de expansión mínima o Minimum Spanning Tree (MST, por sus siglas en inglés) de un grafo conexo no dirigido y ponderado es un subgrafo que conecta todos los vértices, no tiene ciclos y tiene la suma de pesos más baja posible. Kruskal es uno de los algoritmos clásicos para encontrarlo, y necesita una estructura auxiliar para saber rápido si dos vértices ya están conectados: Union-Find.
 
 1. ¿Qué es Union-Find?
+
 Una estructura auxiliar que mantiene una colección de conjuntos disjuntos (sin elementos en común) sobre los elementos 0, 1, ..., n-1, con dos operaciones:
 
 find(x): devuelve el representante (raíz) del conjunto al que pertenece x.
