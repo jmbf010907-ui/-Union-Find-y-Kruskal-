@@ -77,7 +77,7 @@ Una estructura auxiliar que mantiene una colección de conjuntos disjuntos (sin 
 - find(x): devuelve el representante (raíz) del conjunto al que pertenece x.
 - union(x, y): une los conjuntos de x y y.
 
-Implementación con bosque de árboles: cada conjunto es un árbol cuya raíz es su representante. Sin optimizaciones, los árboles pueden degenerar en listas y las operaciones costar O(n).
+En una implementación con bosque de árboles: cada conjunto es un árbol cuya raíz es su representante. Sin optimizaciones, los árboles pueden degenerar en listas y las operaciones costar O(n).
 Por eso hay dos optimizaciones para cada parte de Union-Find:
 
 - Union by rank (en el union): Al unir, la raíz del árbol más pequeño apunta a la del más grande. Mantiene la altura en O(log n).
