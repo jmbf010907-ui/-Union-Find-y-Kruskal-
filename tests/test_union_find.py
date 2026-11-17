@@ -1,41 +1,41 @@
-"""Pruebas de la demo de Union-Find.  Correr con:  pytest"""
 import os, sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
-from union_find import UnionFind
+
+from union_find import UnionFind, ID
+from kruskal import kruskal, CABLES
 
 
-def test_estado_inicial():
+def test_inicio():
     uf = UnionFind(6)
     assert uf.padre == [0, 1, 2, 3, 4, 5]
     assert uf.conjuntos == 6
 
 
-def test_demo_paso_a_paso():
+def test_union_por_rango():
     uf = UnionFind(6)
-    assert uf.union(0, 1) and uf.padre == [0, 0, 2, 3, 4, 5]
-    assert uf.union(2, 3) and uf.padre == [0, 0, 2, 2, 4, 5]
-    assert uf.union(1, 3) and uf.padre == [0, 0, 0, 2, 4, 5]
-    assert uf.rango == [2, 0, 1, 0, 0, 0]
+    uf.union(ID["A"], ID["B"]); uf.union(ID["D"], ID["F"]); uf.union(ID["B"], ID["D"])
+    assert uf.padre[ID["D"]] == ID["A"]          # rangos iguales: D cuelga de A
+    assert uf.rango[ID["A"]] == 2
     assert uf.conjuntos == 3
 
 
-def test_conectados():
+def test_compresion():
     uf = UnionFind(6)
-    uf.union(0, 1); uf.union(2, 3); uf.union(1, 3)
-    assert uf.conectados(0, 2)
-    assert not uf.conectados(0, 5)
+    uf.union(ID["A"], ID["B"]); uf.union(ID["D"], ID["F"]); uf.union(ID["B"], ID["D"])
+    assert uf.padre[ID["F"]] == ID["D"]          # F está a dos saltos de A
+    assert uf.find(ID["F"]) == ID["A"]
+    assert uf.padre[ID["F"]] == ID["A"]          # después del find, apunta directo
 
 
-def test_compresion_de_caminos():
+def test_conectados_y_ciclo():
     uf = UnionFind(6)
-    uf.union(0, 1); uf.union(2, 3); uf.union(1, 3)
-    assert uf.padre[3] == 2          # antes: 3 está a dos saltos de la raíz
-    uf.find(3)
-    assert uf.padre[3] == 0          # después: apunta directo a la raíz
+    uf.union(ID["A"], ID["B"]); uf.union(ID["D"], ID["F"]); uf.union(ID["B"], ID["D"])
+    assert uf.conectados(ID["B"], ID["F"])
+    assert not uf.conectados(ID["A"], ID["E"])
+    assert uf.union(ID["B"], ID["F"]) is False   # cerraría un ciclo
 
 
-def test_union_detecta_ciclo():
-    uf = UnionFind(6)
-    uf.union(0, 1); uf.union(2, 3); uf.union(1, 3)
-    assert uf.union(0, 2) is False   # misma raíz: cerraría un ciclo
-    assert uf.conjuntos == 3         # y no cambia nada
+def test_kruskal():
+    arbol, costo = kruskal(6, CABLES)
+    assert costo == 16
+    assert [(u, v) for u, v, _ in arbol] == [("A", "B"), ("D", "F"), ("B", "D"), ("E", "F"), ("A", "C")]

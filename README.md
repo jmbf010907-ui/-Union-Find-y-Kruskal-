@@ -5,31 +5,65 @@
 **Estructuras de Datos y Algoritmos II** · Semestre 2027-1 · Exposiciones finales, Tema 4
 **Profesor:** Daniel Vargas
 
-** Presentacion : https://canva.link/bp6d7y4sz90zyc5 ** 
-
 ---
 
 ## Integrantes
 
+> ✏️ **Por completar.** Nombre completo y número de cuenta de cada integrante.
 
-| Nombre                 | Número de cuenta | Parte de la exposición |
+| Nombre | Número de cuenta | Parte de la exposición |
 |---|---|---|
-|Bolaños Fuentes Juan Manuel|323257419|Demostracion y Analisis|
-|Prado Gutierrez Juan Alejandro |323156271|Demo y explicacion de algoritmo|
 | | | |
 | | | |
+| | | |
+
+---
+
+## Presentación y demo interactiva
+
+- [Ver la presentación en Canva](https://www.canva.com/design/DAHbH8aB2Tk/JuhjAeXB62RFXUQYbMUKYQ/view)
+- **[Demo interactiva](https://jmbf010907-ui.github.io/-Union-Find-y-Kruskal-/)**: los mismos pasos de la Parte 2, con botones para avanzar y retroceder, y un modo libre para hacer tus propios `union` y `find`. El código está en [`docs/index.html`](docs/index.html).
 
 ---
 
 ## Contenido
 
-1. [Teoría]
-2. [Demo]
-3. [Análisis de resultados]
-4. [Conclusiones]
-5. [Referencias]
+1. [Teoría](#parte-1--teoría)
+2. [Demo](#parte-2--demo): [el problema](#el-problema), [sección 1 · Union-Find](#sección-1--union-find), [sección 2 · Kruskal](#sección-2--kruskal)
+3. [Análisis de resultados](#parte-3--análisis-de-resultados)
+4. [Conclusiones](#parte-4--conclusiones)
+5. [Referencias](#referencias)
+
 ---
 
+## Cómo correrlo
+
+Requisitos: Python 3.10 o superior. Para las pruebas, `pytest`.
+
+```bash
+python src/union_find.py        # sección 1: Union-Find paso a paso
+cd src && python kruskal.py     # sección 2: Kruskal paso a paso
+python src/benchmark.py 20000   # el experimento de la Parte 3
+pytest                          # las pruebas
+```
+
+```
+-Union-Find-y-Kruskal-/
+├── README.md
+├── src/
+│   ├── union_find.py       # la estructura y la demo de la sección 1
+│   ├── kruskal.py          # Kruskal sobre la misma red (sección 2)
+│   └── benchmark.py        # mide el efecto de las optimizaciones
+├── tests/
+│   └── test_union_find.py
+├── docs/
+│   └── index.html          # la demo interactiva (GitHub Pages)
+├── media/                  # diagramas
+└── tools/
+    └── gen_media.py        # genera los diagramas de media/
+```
+
+---
 
 # Parte 1 · Teoría
 
@@ -41,177 +75,356 @@
 
 # Parte 2 · Demo
 
-## 2.1 El código
+Toda la demo usa **un solo problema**. La sección 1 muestra cómo trabaja
+Union-Find y la sección 2 usa esa misma estructura dentro de Kruskal. Los dos
+programas imprimen exactamente lo que se ve en las imágenes.
 
-La implementación está en [`src/union_find.py`](src/union_find.py).
+## El problema
 
-![Código de UnionFind](media/codigo_union_find.png)
+![El problema](media/problema.png)
+
+Hay 6 computadoras, de la `A` a la `F`, y 8 cables posibles, cada uno con su
+costo. Hay que conectarlas todas gastando lo menos posible.
+
+| Cable | A–B | D–F | B–D | E–F | D–E | A–C | C–E | B–C |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| Costo | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
+
+Surgen dos preguntas:
+
+1. **¿Estas dos computadoras ya están conectadas?** La responde Union-Find (sección 1).
+2. **¿Qué cables compro?** La responde Kruskal, que usa Union-Find para no formar ciclos (sección 2).
+
+En el código, `A..F` son los índices `0..5` (`ID = {"A": 0, "B": 1, ...}`).
+En las tablas, **en negrita** lo que cambia respecto al paso anterior.
+
+---
+
+## Sección 1 · Union-Find
+
+![Sección 1](media/s1_portada.png)
+
+### Teoría
+
+![Teoría de Union-Find](media/s1_teoria.png)
+
+- Cada conjunto es un **árbol**; su raíz es el representante.
+- `padre[x]` guarda el padre de `x`. Si `padre[x] == x`, `x` es raíz.
+- `find(x)` sube hasta la raíz. `union(a, b)` cuelga una raíz de la otra.
+  `conectados(a, b)` compara `find(a)` con `find(b)`.
+- **Unión por rango:** el árbol bajo cuelga del alto, así la altura queda en `O(log n)`.
+- **Compresión de caminos:** `find` deja todo el camino apuntando a la raíz.
+  Con las dos, cada operación cuesta `O(α(n))` amortizado.
+
+### El código
+
+[`src/union_find.py`](src/union_find.py)
+
+![Código de UnionFind](media/s1_codigo.png)
 
 ```python
 class UnionFind:
     def __init__(self, n):
-        self.padre = list(range(n))   # cada elemento es su propio conjunto
-        self.rango = [0] * n
+        self.padre = list(range(n))   # cada uno es su propio conjunto
+        self.rango = [0] * n          # cota de la altura de cada árbol
         self.conjuntos = n
 
     def find(self, x):
-        """Devuelve la raíz del conjunto, con compresión de caminos."""
         if self.padre[x] != x:
-            self.padre[x] = self.find(self.padre[x])
+            self.padre[x] = self.find(self.padre[x])   # compresión de caminos
         return self.padre[x]
 
     def union(self, a, b):
-        """Une dos conjuntos por rango. Devuelve False si ya estaban unidos."""
         ra, rb = self.find(a), self.find(b)
         if ra == rb:
-            return False
+            return False                  # ya estaban unidos: sería un ciclo
         if self.rango[ra] < self.rango[rb]:
-            ra, rb = rb, ra
+            ra, rb = rb, ra               # ra es el árbol más alto
         self.padre[rb] = ra
         if self.rango[ra] == self.rango[rb]:
             self.rango[ra] += 1
         self.conjuntos -= 1
-        return True 
+        return True
 
     def conectados(self, a, b):
         return self.find(a) == self.find(b)
-
-    def __repr__(self):
-        return str(self.padre)
-
 ```
 
-## 2.2 La demo paso a paso
-
-Se crean seis elementos, del `0` al `5`. En cada tabla, **en negrita** lo que
-cambia respecto al paso anterior.
+> **Ojo con `__init__`.** Lleva **dos** guiones bajos de cada lado. Con uno solo
+> (`_init_`), Python no lo reconoce como constructor y `UnionFind(6)` falla con
+> `TypeError: UnionFind() takes no arguments`.
 
 ### Paso 0 · `UnionFind(6)`
 
-![Paso 0](media/uf_paso0.png)
+![Paso 0](media/s1_paso0.png)
 
-| i | 0 | 1 | 2 | 3 | 4 | 5 | conjuntos |
+**Teoría:** cada elemento empieza siendo su propio padre. La raíz representa a
+todo su conjunto. Al inicio hay 6 conjuntos de un elemento.
+
+| i | A | B | C | D | E | F | conjuntos |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| `padre` | 0 | 1 | 2 | 3 | 4 | 5 | **6** |
+| `padre` | A | B | C | D | E | F | **6** |
 | `rango` | 0 | 0 | 0 | 0 | 0 | 0 | |
 
-Cada elemento es su propio padre: seis conjuntos de un elemento.
+### Paso 1 · `union(A, B)`
 
-### Paso 1 · `union(0, 1)`
+![Paso 1](media/s1_paso1.png)
 
-![Paso 1](media/uf_paso1.png)
+**Teoría (unión por rango):** `union` une raíces. La de menor rango cuelga de la
+de mayor; si empatan, se elige una y su rango sube 1.
 
-1. `find(0) = 0` y `find(1) = 1`. Raíces distintas.
-2. `rango[0] = rango[1] = 0`, así que no hay intercambio.
-3. `padre[1] ← 0`, y como los rangos eran iguales, `rango[0]` sube a `1`.
+1. `find(A) = A` y `find(B) = B`. Raíces distintas.
+2. `rango[A] = rango[B] = 0`: no hay intercambio.
+3. `padre[B] ← A` y, como empataron, `rango[A]` sube a `1`.
 
-| i | 0 | 1 | 2 | 3 | 4 | 5 | conjuntos |
+| i | A | B | C | D | E | F | conjuntos |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| `padre` | 0 | **0** | 2 | 3 | 4 | 5 | **5** |
+| `padre` | A | **A** | C | D | E | F | **5** |
 | `rango` | **1** | 0 | 0 | 0 | 0 | 0 | |
 
-### Paso 2 · `union(2, 3)`
+### Paso 2 · `union(D, F)`
 
-![Paso 2](media/uf_paso2.png)
+![Paso 2](media/s1_paso2.png)
 
-El mismo caso del otro lado: `padre[3] ← 2` y `rango[2]` sube a `1`.
+**Teoría:** cada `union` exitosa reduce `conjuntos` en 1. El mismo caso en otro
+grupo: `padre[F] ← D` y `rango[D]` sube a `1`. Ahora hay dos árboles de altura 1,
+`{A, B}` y `{D, F}`.
 
-| i | 0 | 1 | 2 | 3 | 4 | 5 | conjuntos |
+| i | A | B | C | D | E | F | conjuntos |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| `padre` | 0 | 0 | 2 | **2** | 4 | 5 | **4** |
-| `rango` | 1 | 0 | **1** | 0 | 0 | 0 | |
+| `padre` | A | A | C | D | E | **D** | **4** |
+| `rango` | 1 | 0 | 0 | **1** | 0 | 0 | |
 
-### Paso 3 · `union(1, 3)` · aquí se ve por qué `union` llama a `find`
+### Paso 3 · `union(B, D)` · se unen raíces, no elementos
 
-![Paso 3](media/uf_paso3.png)
+![Paso 3](media/s1_paso3.png)
 
-1. `find(1)` sube `1 → 0`, así que `ra = 0`.
-2. `find(3)` sube `3 → 2`, así que `rb = 2`.
-3. `rango[0] = rango[2] = 1`: no hay intercambio.
-4. `padre[2] ← 0`: **el árbol de `2` completo** cuelga de `0`.
-5. Los rangos eran iguales, así que `rango[0]` sube a `2`.
+1. `find(B)` sube `B → A`, así que `ra = A`.
+2. `find(D) = D`, así que `rb = D`.
+3. `rango[A] = rango[D] = 1`: no hay intercambio.
+4. `padre[D] ← A`: **el árbol de `D` completo** cuelga de `A`.
+5. Como empataron, `rango[A]` sube a `2`.
 
 ```
-        0              4    5
-       / \
-      1   2
-          |
-          3       ← 3 sigue apuntando a 2: está a dos saltos de la raíz
+      A          C    E
+     / \
+    B   D
+        |
+        F      ← F sigue apuntando a D: está a dos saltos de la raíz
 ```
 
-| i | 0 | 1 | 2 | 3 | 4 | 5 | conjuntos |
+| i | A | B | C | D | E | F | conjuntos |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| `padre` | 0 | 0 | **0** | 2 | 4 | 5 | **3** |
-| `rango` | **2** | 0 | 1 | 0 | 0 | 0 | |
+| `padre` | A | A | C | **A** | E | D | **3** |
+| `rango` | **2** | 0 | 0 | 1 | 0 | 0 | |
 
-### Paso 4 · `conectados(0, 2)` y `conectados(0, 5)`
+### Paso 4 · `find(F)` · compresión de caminos
 
-![Paso 4](media/uf_paso4.png)
+![Paso 4](media/s1_paso4.png)
 
-- `find(0) = 0` y `find(2) = 0`. Misma raíz, así que **`True`**.
-- `find(0) = 0` y `find(5) = 5`. Raíces distintas, así que **`False`**.
+**Teoría:** `padre[x] = find(padre[x])`. La recursión llega a la raíz y, al
+regresar, deja a cada nodo del camino apuntando a ella.
 
-Esta es exactamente la pregunta que Kruskal hace por cada arista. El arreglo no
-cambia.
+`F` estaba a dos saltos: `F → D → A`. Después del `find`, `padre[F] = A`.
 
-### Paso 5 · `find(3)` · la compresión de caminos
-
-![Paso 5](media/uf_paso5.png)
-
-`3` estaba a dos saltos: `3 → 2 → 0`. La recursión llega a la raíz `0` y, al
-regresar, reescribe `padre[3]` con la raíz.
-
-| i | 0 | 1 | 2 | 3 | 4 | 5 | conjuntos |
+| i | A | B | C | D | E | F | conjuntos |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| `padre` | 0 | 0 | 0 | **0** | 4 | 5 | 3 |
-| `rango` | 2 | 0 | 1 | 0 | 0 | 0 | |
+| `padre` | A | A | C | A | E | **A** | 3 |
+| `rango` | 2 | 0 | 0 | 1 | 0 | 0 | |
 
-El árbol se aplanó solo. `conjuntos` no cambia porque los grupos son los mismos.
-`rango[0]` sigue en `2` aunque la altura real ya es `1`: por eso el rango es una
-**cota** de la altura y no la altura exacta.
+`conjuntos` no cambia porque los grupos son los mismos. `rango[A]` sigue en `2`
+aunque la altura real ya es `1`: el rango es una **cota** de la altura, no la
+altura exacta.
 
-### Paso 6 · `union(0, 2)` regresa `False`
+### Paso 5 · `conectados(B, F)` y `conectados(A, E)`
 
-![Paso 6](media/uf_paso6.png)
+![Paso 5](media/s1_paso5.png)
 
-`find(0) = 0` y `find(2) = 0`. Misma raíz: `union` corta en el primer `if` y
-regresa **`False`** sin tocar nada.
+**Teoría:** dos elementos están en el mismo conjunto si y solo si tienen la misma
+raíz. No se recorre la red, solo se hacen dos `find`.
 
-**Este es el corazón de Kruskal.** Si `union` regresa `False`, la arista
-cerraría un ciclo y se descarta.
+- `find(B) = A` y `find(F) = A`. Misma raíz: **`True`**.
+- `find(A) = A` y `find(E) = E`. Raíces distintas: **`False`**.
 
-### Salida completa
+### Paso 6 · `union(B, F)` regresa `False`
+
+![Paso 6](media/s1_paso6.png)
+
+**Teoría:** si `find(a) == find(b)`, ya había un camino entre `a` y `b`. En un
+grafo, esa arista cerraría un **ciclo**. `union` corta en el primer `if` y
+regresa **`False`** sin tocar nada. Esto es justo lo que usa Kruskal.
+
+### Lo que imprime
+
+![Salida de union_find.py](media/s1_salida.png)
 
 ```
 $ python src/union_find.py
-Inicial:        [0, 1, 2, 3, 4, 5]  conjuntos=6
-union(0,1):     [0, 0, 2, 3, 4, 5]  conjuntos=5
-union(2,3):     [0, 0, 2, 2, 4, 5]  conjuntos=4
-union(1,3):     [0, 0, 0, 2, 4, 5]  conjuntos=3
-¿0 y 2 conectados? True
-¿0 y 5 conectados? False
-find(3):        [0, 0, 0, 0, 4, 5]  conjuntos=3
-union(0,2) -> False
+Paso 0  UnionFind(6)
+   padre = [A, B, C, D, E, F]   rango = [0, 0, 0, 0, 0, 0]   conjuntos = 6
+Paso 1  union(A, B) -> True
+   padre = [A, A, C, D, E, F]   rango = [1, 0, 0, 0, 0, 0]   conjuntos = 5
+Paso 2  union(D, F) -> True
+   padre = [A, A, C, D, E, D]   rango = [1, 0, 0, 1, 0, 0]   conjuntos = 4
+Paso 3  union(B, D) -> True
+   padre = [A, A, C, A, E, D]   rango = [2, 0, 0, 1, 0, 0]   conjuntos = 3
+Paso 4  find(F) -> A   (compresión: F ahora apunta directo a A)
+   padre = [A, A, C, A, E, A]   rango = [2, 0, 0, 1, 0, 0]   conjuntos = 3
+Paso 5  conectados(B, F) -> True
+        conectados(A, E) -> False
+Paso 6  union(B, F) -> False   (misma raíz: sería un ciclo)
+   padre = [A, A, C, A, E, A]   rango = [2, 0, 0, 1, 0, 0]   conjuntos = 3
 ```
 
-### Resumen de la traza
+---
 
-| Operación | `padre` | `rango` | conjuntos | Regresa |
-|---|---|---|:---:|:---:|
-| `UnionFind(6)` | `[0, 1, 2, 3, 4, 5]` | `[0, 0, 0, 0, 0, 0]` | 6 | — |
-| `union(0, 1)` | `[0, `**`0`**`, 2, 3, 4, 5]` | `[`**`1`**`, 0, 0, 0, 0, 0]` | 5 | `True` |
-| `union(2, 3)` | `[0, 0, 2, `**`2`**`, 4, 5]` | `[1, 0, `**`1`**`, 0, 0, 0]` | 4 | `True` |
-| `union(1, 3)` | `[0, 0, `**`0`**`, 2, 4, 5]` | `[`**`2`**`, 0, 1, 0, 0, 0]` | 3 | `True` |
-| `conectados(0, 2)` | sin cambio | sin cambio | 3 | `True` |
-| `conectados(0, 5)` | sin cambio | sin cambio | 3 | `False` |
-| `find(3)` | `[0, 0, 0, `**`0`**`, 4, 5]` | sin cambio | 3 | `0` |
-| `union(0, 2)` | sin cambio | sin cambio | 3 | **`False`** |
+## Sección 2 · Kruskal
 
-## 2.3 Demo de Kruskal
+![Sección 2](media/s2_portada.png)
 
-> ✏️ **Por completar.** Implementación de Kruskal en `src/kruskal.py` usando la
-> clase `UnionFind`, corriendo sobre el grafo de [`media/kruskal_grafo.png`](media/kruskal_grafo.png), con su salida.
-> El MST esperado es { A–C, C–E, A–B, D–E, E–F } con peso 19.
+### Teoría
+
+![Teoría de Kruskal](media/s2_teoria.png)
+
+Un **árbol de expansión mínima** conecta los `V` vértices con `V − 1` aristas y
+el menor peso total. Kruskal es un algoritmo **voraz**:
+
+```
+ordenar las aristas por peso
+para cada arista (u, v, w):
+    si union(u, v):          # find(u) != find(v): no forma ciclo
+        agregarla al árbol
+    si el árbol tiene V − 1 aristas: parar
+```
+
+Union-Find responde "¿formaría un ciclo?" en `O(α(V))`, sin recorrer el grafo.
+
+### El código
+
+[`src/kruskal.py`](src/kruskal.py), que importa la misma clase `UnionFind`.
+
+![Código de Kruskal](media/s2_codigo.png)
+
+```python
+from union_find import UnionFind, NOMBRES, ID
+
+CABLES = [(1, "A", "B"), (2, "D", "F"), (3, "B", "D"), (4, "E", "F"),
+          (5, "D", "E"), (6, "A", "C"), (7, "C", "E"), (8, "B", "C")]
+
+def kruskal(n, aristas, verbose=False):
+    uf = UnionFind(n)
+    arbol, costo = [], 0
+    for paso, (w, u, v) in enumerate(sorted(aristas), start=1):   # 1) ordenar
+        ru, rv = uf.find(ID[u]), uf.find(ID[v])
+        acepta = uf.union(ID[u], ID[v])                             # 2) union decide
+        if acepta:
+            arbol.append((u, v, w))
+            costo += w
+        if verbose:
+            ...                                                     # imprime el paso
+        if len(arbol) == n - 1:                                     # 3) V - 1 aristas
+            break
+    return arbol, costo
+```
+
+### Paso 0 · ordenar los cables
+
+![Paso 0](media/s2_paso0.png)
+
+Se ordenan los 8 cables de menor a mayor costo. Todavía nadie está conectado:
+cada computadora es su propio conjunto.
+
+### Paso 1 · `A–B (1)` ✓
+
+![Paso 1](media/s2_paso1.png)
+
+`find(A) = A`, `find(B) = B`. Raíces distintas: no hay camino entre ellas, así
+que se acepta y `union(A, B)` las junta. Es el paso 1 de la sección 1.
+
+### Paso 2 · `D–F (2)` ✓
+
+![Paso 2](media/s2_paso2.png)
+
+`find(D) = D`, `find(F) = F`. Se acepta. No toca a `{A, B}`: Kruskal crece como
+un **bosque** que se va uniendo, no como un solo árbol.
+
+### Paso 3 · `B–D (3)` ✓
+
+![Paso 3](media/s2_paso3.png)
+
+`find(B) = A`, `find(D) = D`. Se acepta y se unen los dos grupos. Rangos 1 y 1:
+`D` cuelga de `A` y `rango[A] = 2`. Igual que el paso 3 de la sección 1.
+
+### Paso 4 · `E–F (4)` ✓
+
+![Paso 4](media/s2_paso4.png)
+
+`find(E) = E`. `find(F)` recorre `F → D → A` y **comprime**: `F` queda apuntando
+a `A`. Como `rango[E] = 0 < rango[A] = 2`, `E` cuelga de `A`.
+
+### Paso 5 · `D–E (5)` ✗ ciclo
+
+![Paso 5](media/s2_paso5.png)
+
+`find(D) = A` y `find(E) = A`. **Misma raíz**: `D` y `E` ya están conectados por
+`D–F–E`, así que este cable cerraría un ciclo. `union` regresa `False` y se
+descarta.
+
+### Paso 6 · `A–C (6)` ✓ y termina
+
+![Paso 6](media/s2_paso6.png)
+
+`find(A) = A`, `find(C) = C`. Se acepta. Ya son 5 cables, `V − 1`, así que el
+árbol está completo: `C–E (7)` y `B–C (8)` ni se revisan.
+
+### Resultado
+
+![Resultado](media/s2_resultado.png)
+
+| Paso | Cable | `find(u)` | `find(v)` | Decisión | `padre` después | Costo |
+|:---:|:---:|:---:|:---:|:---:|---|:---:|
+| 1 | A–B (1) | A | B | ✓ | `[A, `**`A`**`, C, D, E, F]` | 1 |
+| 2 | D–F (2) | D | F | ✓ | `[A, A, C, D, E, `**`D`**`]` | 3 |
+| 3 | B–D (3) | A | D | ✓ | `[A, A, C, `**`A`**`, E, D]` | 6 |
+| 4 | E–F (4) | E | A | ✓ | `[A, A, C, A, `**`A`**`, `**`A`**`]` | 10 |
+| 5 | D–E (5) | A | A | ✗ ciclo | sin cambio | 10 |
+| 6 | A–C (6) | A | C | ✓ | `[A, A, `**`A`**`, A, A, A]` | **16** |
+
+**Árbol de expansión mínima:** A–B, D–F, B–D, E–F, A–C. **Costo total: 16.**
+
+### Lo que imprime
+
+![Salida de kruskal.py](media/s2_salida.png)
+
+```
+$ python kruskal.py
+Cables ordenados: A-B(1), D-F(2), B-D(3), E-F(4), D-E(5), A-C(6), C-E(7), B-C(8)
+Paso 1  A-B (1)  find(A)=A  find(B)=B  -> acepta
+   padre = [A, A, C, D, E, F]   árbol: 1 de 5   costo = 1
+Paso 2  D-F (2)  find(D)=D  find(F)=F  -> acepta
+   padre = [A, A, C, D, E, D]   árbol: 2 de 5   costo = 3
+Paso 3  B-D (3)  find(B)=A  find(D)=D  -> acepta
+   padre = [A, A, C, A, E, D]   árbol: 3 de 5   costo = 6
+Paso 4  E-F (4)  find(E)=E  find(F)=A  -> acepta
+   padre = [A, A, C, A, A, A]   árbol: 4 de 5   costo = 10
+Paso 5  D-E (5)  find(D)=A  find(E)=A  -> rechaza (ciclo)
+   padre = [A, A, C, A, A, A]   árbol: 4 de 5   costo = 10
+Paso 6  A-C (6)  find(A)=A  find(C)=C  -> acepta
+   padre = [A, A, A, A, A, A]   árbol: 5 de 5   costo = 16
+Árbol de expansión mínima: A-B(1), D-F(2), B-D(3), E-F(4), A-C(6)
+Costo total: 16
+```
+
+### Pruébalo en la demo interactiva
+
+![Demo interactiva](media/interactivo.png)
+
+**[jmbf010907-ui.github.io/-Union-Find-y-Kruskal-](https://jmbf010907-ui.github.io/-Union-Find-y-Kruskal-/)**:
+las dos secciones con los mismos pasos, más un modo libre.
+
+### ¿Por qué no recorrer el grafo?
+
+![Comparación](media/comparacion.png)
 
 ---
 
@@ -284,6 +497,8 @@ python src/benchmark.py 20000
 
 # Parte 4 · Conclusiones
 
+> ✏️ **Por completar.** Conclusiones del equipo: qué se aprendió, qué
+> mostraron los resultados y en qué casos conviene Kruskal frente a Prim.
 
 ---
 

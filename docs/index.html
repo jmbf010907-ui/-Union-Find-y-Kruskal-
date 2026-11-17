@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Union-Find y Kruskal · paso a paso</title>
+<meta name="description" content="Demo interactiva de Union-Find y Kruskal sobre una red de 6 computadoras. EDA II, Tema 4.">
+<style>
+:root{
+  --bg:#f6f9ff; --ink:#0b2545; --muted:#546885; --line:#c4d0e4; --card:#fff;
+  --blue:#1e5eff; --green:#10a36b; --green-bg:#dcfce7; --red:#e12d39; --red-bg:#fee2e2;
+  --amber:#f59e0b; --amber-bg:#fef3c7; --violet:#7c3aed;
+  --mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, "DejaVu Sans Mono", monospace;
+  --sans: Inter, "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+.stage.one svg{max-width:620px;margin:0 auto}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+button,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.wrap{max-width:1280px;margin:0 auto;padding:28px 24px 40px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:22px}
+h1{font-size:clamp(26px,3.4vw,40px);line-height:1.05;margin:0;letter-spacing:-.02em;font-weight:800}
+.sub{color:var(--muted);margin:6px 0 0;font-size:15px}
+.tabs{display:flex;gap:6px;background:#e7eefb;padding:5px;border-radius:14px}
+.tab{border:0;background:transparent;padding:9px 16px;border-radius:10px;cursor:pointer;font-weight:600;color:var(--muted)}
+.tab[aria-selected="true"]{background:var(--card);color:var(--ink);box-shadow:0 1px 0 var(--line)}
+.grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:20px}
+@media (max-width:920px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1.5px solid var(--line);border-radius:20px;padding:18px}
+.stage{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.stage.one{grid-template-columns:1fr}
+@media (max-width:620px){.stage{grid-template-columns:1fr}}
+.view h3,.side h3{margin:0 0 8px;font-size:13px;font-weight:600;color:var(--muted)}
+svg{width:100%;height:auto;display:block}
+.tbl{margin-top:16px;overflow-x:auto}
+table{border-collapse:separate;border-spacing:6px;margin:-6px}
+th{font-weight:600;color:var(--muted);font-size:14px;text-align:right;padding-right:6px}
+th.col{text-align:center;padding:0}
+td{width:52px;height:42px;text-align:center;font-family:var(--mono);font-size:18px;font-weight:700;border:1.5px solid var(--line);border-radius:10px;background:#fff}
+tr.rk td{background:#eef3fb;color:var(--muted);font-weight:400}
+td.hot{background:var(--amber-bg);border-color:var(--amber);color:#92400e;border-width:2.5px}
+.conj{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;margin-left:14px;padding:6px 18px;border-radius:14px;background:#e8f0ff;border:1.5px solid #bdd0fa;vertical-align:middle}
+.conj b{font-size:30px;color:var(--blue);line-height:1}
+.conj span{font-size:12px;color:var(--muted)}
+.tblrow{display:flex;align-items:center;flex-wrap:wrap;gap:6px}
+.controls{display:flex;align-items:center;gap:10px;margin-top:16px;flex-wrap:wrap}
+.btn{border:1.5px solid var(--line);background:#fff;border-radius:12px;padding:9px 16px;cursor:pointer;font-weight:600}
+.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn:disabled{opacity:.4;cursor:default}
+.dots{display:flex;gap:6px;margin-left:auto}
+.dot{width:12px;height:12px;border-radius:50%;border:0;background:#d5deee;cursor:pointer;padding:0}
+.dot[aria-current="step"]{background:var(--blue);transform:scale(1.25)}
+.side{display:flex;flex-direction:column;gap:16px}
+.step-tag{display:inline-block;padding:4px 12px;border-radius:999px;color:#fff;font-weight:700;font-size:13px;background:var(--blue)}
+.op{font-family:var(--mono);font-size:26px;font-weight:700;margin:10px 0 6px}
+.result{display:inline-block;margin-left:8px;font-size:16px;padding:3px 10px;border-radius:999px;vertical-align:middle;font-family:var(--mono)}
+.desc{color:var(--muted);line-height:1.5;margin:0}
+.theory{border-left:5px solid var(--blue);background:#eef3ff;border-radius:12px;padding:12px 14px;line-height:1.5}
+.theory b{display:block;margin-bottom:4px}
+.theory code{font-family:var(--mono);font-size:.92em}
+.console{background:#0f172a;color:#e2e8f0;border-radius:16px;padding:14px 16px;font-family:var(--mono);font-size:12px;line-height:1.55;min-height:140px;max-height:300px;overflow:auto;white-space:pre}
+.console .p{color:#86efac}.console .h{color:#7dd3fc}.console .s{color:#a0aec4}.console .f{color:#fca5a5}.console .new{background:rgba(125,211,252,.12);border-radius:4px}
+.cables{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:12px}
+.cable{font-family:var(--mono);font-size:14px;padding:6px 8px;border-radius:9px;border:1.5px solid var(--line);display:flex;justify-content:space-between}
+.cable.a{color:var(--green);border-color:#9fd9bf;background:#f0fbf5}
+.cable.r{color:var(--red);border-color:#f3b4b8;background:#fff5f5;text-decoration:line-through}
+.cable.cur{outline:3px solid var(--amber);outline-offset:1px}
+.cable.s{color:#a7b3c7}
+.summary{display:flex;gap:14px;margin-top:12px;font-weight:600}
+.summary .big{font-size:22px}
+.free{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.free select{border:1.5px solid var(--line);border-radius:10px;padding:8px 10px;background:#fff;font-family:var(--mono);font-weight:700}
+footer{margin-top:26px;color:var(--muted);font-size:13px}
+footer a{color:var(--blue)}
+@media (prefers-reduced-motion:no-preference){ .anim{transition:all .35s ease} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Union-Find y Kruskal, paso a paso</h1>
+      <p class="sub">EDA II · Tema 4 · La misma red de 6 computadoras en las dos secciones.</p>
+    </div>
+    <div class="tabs" role="tablist" aria-label="Sección">
+      <button class="tab" role="tab" data-mode="uf" aria-selected="true">1 · Union-Find</button>
+      <button class="tab" role="tab" data-mode="k" aria-selected="false">2 · Kruskal</button>
+      <button class="tab" role="tab" data-mode="free" aria-selected="false">Modo libre</button>
+    </div>
+  </header>
+
+  <div class="grid">
+    <section class="panel" aria-label="Visualización">
+      <div class="stage" id="stage">
+        <div class="view" id="netView"><h3>La red (cables y costo)</h3><svg id="net" viewBox="0 0 520 300" role="img" aria-label="Red de computadoras"></svg></div>
+        <div class="view"><h3>El bosque de Union-Find (flecha = padre)</h3><svg id="forest" viewBox="0 0 520 300" role="img" aria-label="Bosque de Union-Find"></svg></div>
+      </div>
+      <div class="tbl"><div class="tblrow"><table id="arr" aria-label="Arreglos padre y rango"></table><div class="conj"><b id="conj">6</b><span>conjuntos</span></div></div></div>
+      <div id="cablesBox"></div>
+      <div class="controls" id="stepControls">
+        <button class="btn" id="prev" aria-label="Paso anterior">◀ Anterior</button>
+        <button class="btn primary" id="next" aria-label="Paso siguiente">Siguiente ▶</button>
+        <button class="btn" id="reset">Reiniciar</button>
+        <div class="dots" id="dots" aria-label="Pasos"></div>
+      </div>
+      <div class="controls" id="freeControls" hidden>
+        <div class="free">
+          <select id="fa" aria-label="Primer elemento"></select>
+          <select id="fb" aria-label="Segundo elemento"></select>
+          <button class="btn primary" data-op="union">union(a, b)</button>
+          <button class="btn" data-op="conectados">conectados(a, b)</button>
+          <button class="btn" data-op="find">find(a)</button>
+          <button class="btn" id="freeReset">Reiniciar</button>
+        </div>
+      </div>
+    </section>
+
+    <aside class="side">
+      <div class="panel">
+        <span class="step-tag" id="tag">Paso 0</span>
+        <div class="op" id="op">UnionFind(6)</div>
+        <p class="desc" id="desc"></p>
+      </div>
+      <div class="theory" id="theory"></div>
+      <div>
+        <h3 style="margin:0 0 8px;font-size:13px;color:var(--muted);font-weight:600">Lo que imprime el programa</h3>
+        <div class="console" id="console" aria-live="polite"></div>
+      </div>
+    </aside>
+  </div>
+
+  <footer>
+    Código: <code>src/union_find.py</code> y <code>src/kruskal.py</code> en el
+    <a href="https://github.com/jmbf010907-ui/-Union-Find-y-Kruskal-">repositorio</a>. Usa ← y → del teclado para avanzar.
+  </footer>
+</div>
+
+<script>
+const N = "ABCDEF", ID = {}; [...N].forEach((c, i) => ID[c] = i);
+const SET = ["#2563eb", "#0d9488", "#ea580c", "#7c3aed", "#ca8a04", "#db2777"];
+const COL = {blue: "#1e5eff", green: "#10a36b", red: "#e12d39", amber: "#f59e0b", ink: "#0b2545"};
+const CABLES = [[1,"A","B"],[2,"D","F"],[3,"B","D"],[4,"E","F"],[5,"D","E"],[6,"A","C"],[7,"C","E"],[8,"B","C"]];
+const GRID = {A:[0,0], C:[1,0], E:[2,0], B:[0,1], D:[1,1], F:[2,1]};
+
+class UnionFind {
+  constructor(n){ this.padre=[...Array(n).keys()]; this.rango=Array(n).fill(0); this.conjuntos=n; }
+  find(x){ if(this.padre[x]!==x) this.padre[x]=this.find(this.padre[x]); return this.padre[x]; }
+  union(a,b){
+    let ra=this.find(a), rb=this.find(b);
+    if(ra===rb) return false;
+    if(this.rango[ra]<this.rango[rb]) [ra,rb]=[rb,ra];
+    this.padre[rb]=ra;
+    if(this.rango[ra]===this.rango[rb]) this.rango[ra]++;
+    this.conjuntos--; return true;
+  }
+  conectados(a,b){ return this.find(a)===this.find(b); }
+}
+const estado = uf => `   padre = [${uf.padre.map(p=>N[p]).join(", ")}]   rango = [${uf.rango.join(", ")}]   conjuntos = ${uf.conjuntos}`;
+
+/* ---------- Sección 1: los 7 pasos de union_find.py ---------- */
+const UF_STEPS = [
+  {op:"UnionFind(6)", tag:"Paso 0", color:"blue", desc:"Seis computadoras sin cables: cada una es su propio conjunto.",
+   th:["Inicio","Cada elemento es su propio padre. <code>padre[x] == x</code> significa que x es raíz, y la raíz representa a todo su conjunto."],
+   run:(uf,log)=>{ log.push(["h","Paso 0  UnionFind(6)"],["s",estado(uf)]); }},
+  {op:"union(A, B)", tag:"Paso 1", color:"blue", desc:"find(A) = A y find(B) = B: raíces distintas, se unen. Rangos iguales: B cuelga de A y rango[A] sube a 1.",
+   th:["Unión por rango","union une raíces. La raíz de menor rango cuelga de la de mayor; si empatan, se elige una y su rango sube 1. Así los árboles se mantienen bajos."],
+   run:(uf,log)=>{ const r=uf.union(0,1); log.push(["h",`Paso 1  union(A, B) -> ${py(r)}`],["s",estado(uf)]); return r; }},
+  {op:"union(D, F)", tag:"Paso 2", color:"blue", desc:"El mismo caso en otro grupo: F cuelga de D y rango[D] sube a 1.",
+   th:["Cada union resta un conjunto","Cada union exitosa reduce <code>conjuntos</code> en 1. Ahora hay dos árboles de altura 1: {A, B} y {D, F}."],
+   run:(uf,log)=>{ const r=uf.union(3,5); log.push(["h",`Paso 2  union(D, F) -> ${py(r)}`],["s",estado(uf)]); return r; }},
+  {op:"union(B, D)", tag:"Paso 3", color:"blue", desc:"find(B) = A y find(D) = D. Rangos iguales (1 y 1): el árbol de D cuelga de A y rango[A] sube a 2.",
+   th:["Se unen raíces, no elementos","Aunque pedimos unir B con D, quienes se conectan son sus raíces A y D. F queda a dos saltos de la raíz: F → D → A."],
+   run:(uf,log)=>{ const r=uf.union(1,3); log.push(["h",`Paso 3  union(B, D) -> ${py(r)}`],["s",estado(uf)]); return r; }},
+  {op:"find(F)", tag:"Paso 4", color:"amber", desc:"F sube por D hasta A. Al regresar de la recursión, F queda apuntando directo a la raíz.",
+   th:["Compresión de caminos","<code>padre[x] = find(padre[x])</code>: cada nodo del camino queda apuntando a la raíz. El árbol se aplana y el siguiente find(F) es inmediato."],
+   run:(uf,log)=>{ const r=uf.find(5); log.push(["f",`Paso 4  find(F) -> ${N[r]}   (compresión: F ahora apunta directo a A)`],["s",estado(uf)]); return N[r]; }},
+  {op:"conectados(B, F)", tag:"Paso 5", color:"green", desc:"find(B) = A y find(F) = A: misma raíz, misma red → True. En cambio conectados(A, E): A ≠ E → False.",
+   th:["Mismo conjunto ⇔ misma raíz","No se recorre la red: basta con dos find() y comparar. Esto es lo que Kruskal pregunta antes de comprar cada cable."],
+   run:(uf,log)=>{ const r=uf.conectados(1,5), r2=uf.conectados(0,4); log.push(["p",`Paso 5  conectados(B, F) -> ${py(r)}`],["f",`        conectados(A, E) -> ${py(r2)}`]); return r; }},
+  {op:"union(B, F)", tag:"Paso 6", color:"red", desc:"B y F ya tienen la misma raíz: union no cambia nada y devuelve False.",
+   th:["Detectar ciclos","Si <code>find(a) == find(b)</code>, ya había un camino entre a y b. En un grafo, esa arista cerraría un ciclo. Kruskal usa exactamente este False."],
+   run:(uf,log)=>{ const r=uf.union(1,5); log.push(["f",`Paso 6  union(B, F) -> ${py(r)}   (misma raíz: sería un ciclo)`],["s",estado(uf)]); return r; }},
+];
+const UF_FOCUS = [[],["A","B"],["D","F"],["B","D"],["F"],["B","F","E"],["B","F"]];
+
+/* ---------- Sección 2: Kruskal (kruskal.py) ---------- */
+function kruskalTrace(){
+  const steps=[], uf=new UnionFind(6), st=CABLES.map(()=> "p"); let costo=0, arbol=0;
+  const log=[["h","Cables ordenados: "+CABLES.map(([w,u,v])=>`${u}-${v}(${w})`).join(", ")]];
+  steps.push({op:"ordenar cables", tag:"Paso 0", color:"blue", cur:-1, st:[...st], costo, arbol, log:[...log], uf:clone(uf),
+    desc:"Se ordenan los 8 cables de menor a mayor costo. Nadie está conectado todavía.",
+    th:["Kruskal es voraz","1) ordenar por costo · 2) tomar cada cable si no forma ciclo · 3) parar al tener V − 1 cables (aquí 5). El paso 2 lo resuelve Union-Find."]});
+  const TH = {
+    "A-B":["Raíces distintas","find(A)=A y find(B)=B: no hay camino entre A y B. Se acepta y union los junta. Es el paso 1 de la sección 1."],
+    "D-F":["Crece como bosque","D–F no toca a {A, B}: aparece un segundo grupo. Kruskal no crece como un solo árbol sino como un bosque que se va uniendo."],
+    "B-D":["Unir dos grupos","find(B)=A y find(D)=D. Rangos 1 y 1: D cuelga de A y rango[A] = 2. Igual que el paso 3 de la sección 1."],
+    "E-F":["La compresión trabaja sola","find(F) recorre F → D → A y comprime: F → A. Como rango[E] = 0 < 2, E cuelga de A."],
+    "D-E":["Ciclo: se descarta","find(D)=A y find(E)=A. D y E ya están conectados por el camino D–F–E, así que este cable cerraría un ciclo. union devuelve False."],
+    "A-C":["V − 1 cables: fin","Con 5 cables las 6 computadoras quedan conectadas. C–E (7) y B–C (8) ni se revisan."],
+  };
+  for(let i=0;i<CABLES.length;i++){
+    const [w,u,v]=CABLES[i]; const ru=uf.find(ID[u]), rv=uf.find(ID[v]);
+    const ok=uf.union(ID[u],ID[v]); st[i]= ok?"a":"r"; if(ok){costo+=w;arbol++;}
+    log.push([ok?"h":"f",`Paso ${i+1}  ${u}-${v} (${w})  find(${u})=${N[ru]}  find(${v})=${N[rv]}  -> ${ok?"acepta":"rechaza (ciclo)"}`],
+             ["s",`   padre = [${uf.padre.map(p=>N[p]).join(", ")}]   árbol: ${arbol} de 5   costo = ${costo}`]);
+    const key=`${u}-${v}`;
+    steps.push({op:`${u}–${v} (${w})`, tag:`Paso ${i+1}`, color: ok?"green":"red", cur:i, st:[...st], costo, arbol, uf:clone(uf), log:[...log], focus:[u,v],
+      result: ok?"acepta":"rechaza", desc:`find(${u}) = ${N[ru]}, find(${v}) = ${N[rv]}. ` + (ok?"Raíces distintas: se acepta el cable y se hace union.":"Misma raíz: el cable cerraría un ciclo, se descarta."),
+      th:TH[key]});
+    if(arbol===5) break;
+  }
+  for(let i=0;i<st.length;i++) if(st[i]==="p") st[i]="s";
+  log.push(["p","Árbol de expansión mínima: A-B(1), D-F(2), B-D(3), E-F(4), A-C(6)"],["p",`Costo total: ${costo}`]);
+  steps.push({op:"Resultado", tag:"Fin", color:"green", cur:-1, st:[...st], costo, arbol, uf:clone(uf), log:[...log], final:true,
+    desc:"Las 6 computadoras quedan conectadas con 5 cables, sin ciclos y con el menor costo posible: 16.",
+    th:["Árbol de expansión mínima","Costo total O(E log E): ordenar domina, porque cada operación de Union-Find cuesta O(α(V)), casi constante."]});
+  return steps;
+}
+const py = v => v===true?"True":v===false?"False":v;
+function clone(uf){ const c=new UnionFind(6); c.padre=[...uf.padre]; c.rango=[...uf.rango]; c.conjuntos=uf.conjuntos; return c; }
+
+/* ---------- Dibujo ---------- */
+const svgNS="http://www.w3.org/2000/svg";
+function el(tag, attrs, parent, text){ const e=document.createElementNS(svgNS,tag); for(const k in attrs) e.setAttribute(k,attrs[k]); if(text!==undefined) e.textContent=text; parent&&parent.appendChild(e); return e; }
+const rootOf=(par,i)=>{ while(par[i]!==i) i=par[i]; return i; };
+
+function drawNode(g,x,y,label,fill,ring){
+  if(ring) el("circle",{cx:x,cy:y,r:30,fill:"none",stroke:ring,"stroke-width":5},g);
+  el("circle",{cx:x+2,cy:y+4,r:23,fill:"#d6e0f2"},g);
+  el("circle",{cx:x,cy:y,r:23,fill,stroke:"#fff","stroke-width":3},g);
+  el("text",{x,y:y+7,"text-anchor":"middle","font-size":21,"font-weight":800,fill:"#fff","font-family":"var(--sans)"},g,label);
+}
+function drawNet(svg, st, cur, par, final){
+  svg.innerHTML=""; const P=k=>[70+GRID[k][0]*190, 70+GRID[k][1]*160];
+  CABLES.forEach(([w,u,v],i)=>{
+    const s=st?st[i]:"p"; if(final && s!=="a") return;
+    const [x1,y1]=P(u),[x2,y2]=P(v);
+    if(i===cur) el("line",{x1,y1,x2,y2,stroke:"#fde6aa","stroke-width":16,"stroke-linecap":"round"},svg);
+    el("line",{x1,y1,x2,y2,stroke: s==="a"?COL.green: s==="r"?COL.red:"#b4c0d6","stroke-width": s==="a"?6:3,"stroke-dasharray": s==="r"?"8 7":"", "stroke-linecap":"round"},svg);
+    const t=(u==="B"&&v==="C")?.32:.5, mx=x1+(x2-x1)*t, my=y1+(y2-y1)*t;
+    el("rect",{x:mx-14,y:my-12,width:28,height:24,rx:7,fill:"#fff",stroke:s==="a"?COL.green:"#c4d0e4","stroke-width":1.5},svg);
+    el("text",{x:mx,y:my+5,"text-anchor":"middle","font-size":14,"font-weight":700,fill:COL.ink,"font-family":"var(--sans)"},svg,w);
+  });
+  const focus = cur>=0 ? [CABLES[cur][1],CABLES[cur][2]] : [];
+  [...N].forEach(k=>{ const [x,y]=P(k); const i=ID[k];
+    drawNode(svg,x,y,k, par? SET[rootOf(par,i)] : "#7888a8", focus.includes(k)?COL.amber:null); });
+}
+function layout(par){
+  const ch={}; [...N].forEach((_,i)=>ch[i]=[]); par.forEach((p,i)=>{ if(p!==i) ch[p].push(i); });
+  const roots=par.map((p,i)=>p===i?i:-1).filter(i=>i>=0);
+  const wd=i=>Math.max(1,ch[i].reduce((s,k)=>s+wd(k),0));
+  const tot=roots.reduce((s,r)=>s+wd(r),0), unit=Math.min(90,460/tot), off=30+(460-tot*unit)/2, pos={};
+  const place=(i,l,d)=>{ pos[i]=[off+(l+wd(i)/2)*unit, 50+d*90]; let k0=l; ch[i].forEach(k=>{place(k,k0,d+1);k0+=wd(k);}); };
+  let k0=0; roots.forEach(r=>{place(r,k0,0);k0+=wd(r);}); return pos;
+}
+function drawForest(svg, par, prevPar, rings){
+  svg.innerHTML="";
+  const defs=el("defs",{},svg);
+  [["ah","#46597f"],["ahHot",COL.amber],["ahGhost","#b0bed6"]].forEach(([id,c])=>{
+    const m=el("marker",{id,viewBox:"0 0 10 10",refX:9,refY:5,markerWidth:7,markerHeight:7,orient:"auto-start-reverse"},defs);
+    el("path",{d:"M0,0 L10,5 L0,10 z",fill:c},m); });
+  const pos=layout(par);
+  const arrow=(a,b,stroke,w,marker,dash)=>{ const [x1,y1]=pos[a],[x2,y2]=pos[b]; const L=Math.hypot(x2-x1,y2-y1), ux=(x2-x1)/L, uy=(y2-y1)/L;
+    el("line",{x1:x1+ux*26,y1:y1+uy*26,x2:x2-ux*28,y2:y2-uy*28,stroke,"stroke-width":w,"marker-end":`url(#${marker})`,"stroke-dasharray":dash||""},svg); };
+  par.forEach((p,i)=>{
+    if(prevPar && prevPar[i]!==p && prevPar[i]!==i && pos[prevPar[i]]) arrow(i,prevPar[i],"#b0bed6",2.5,"ahGhost","6 5");
+  });
+  par.forEach((p,i)=>{ if(p!==i){ const hot=prevPar && prevPar[i]!==p; arrow(i,p,hot?COL.amber:"#46597f",hot?4:2.8,hot?"ahHot":"ah"); } });
+  par.forEach((p,i)=>{ const [x,y]=pos[i];
+    if(p===i) el("path",{d:`M${x+12},${y-20} a9,9 0 1,1 10,8`,fill:"none",stroke:"#7a8caf","stroke-width":2},svg);
+    drawNode(svg,x,y,N[i],SET[rootOf(par,i)],rings[N[i]]); });
+}
+function drawTable(uf, prev){
+  const t=document.getElementById("arr");
+  let h=`<tr><th>i</th>${[...N].map(c=>`<th class="col">${c}</th>`).join("")}</tr><tr><th>padre</th>`;
+  uf.padre.forEach((p,i)=>{ const hot=prev && prev.padre[i]!==p; h+=`<td class="${hot?"hot anim":"anim"}">${N[p]}</td>`; });
+  h+=`</tr><tr class="rk"><th>rango</th>`;
+  uf.rango.forEach((r,i)=>{ const hot=prev && prev.rango[i]!==r; h+=`<td class="${hot?"hot anim":"anim"}">${r}</td>`; });
+  t.innerHTML=h+"</tr>"; document.getElementById("conj").textContent=uf.conjuntos;
+}
+function drawConsole(lines, newFrom){
+  const c=document.getElementById("console");
+  c.innerHTML=lines.map(([k,s],i)=>`<div class="${k}${i>=newFrom?" new":""}">${s.replace(/</g,"&lt;")}</div>`).join("") || '<div class="s">(sin salida)</div>';
+  c.scrollTop=c.scrollHeight;
+}
+function setSide(s){
+  const tag=document.getElementById("tag"); tag.textContent=s.tag; tag.style.background=COL[s.color];
+  let res="";
+  if(s.result!==undefined){ const good = s.result===true||s.result==="acepta"||s.result==="A"; const bad=s.result===false||s.result==="rechaza";
+    res=`<span class="result" style="background:${bad?"var(--red-bg)":good?"var(--green-bg)":"var(--amber-bg)"};color:${bad?COL.red:good?COL.green:"#92400e"}">${py(s.result)}</span>`; }
+  document.getElementById("op").innerHTML=s.op.replace(/</g,"&lt;")+res;
+  document.getElementById("desc").textContent=s.desc;
+  const th=document.getElementById("theory"); th.style.borderLeftColor=COL[s.color];
+  th.innerHTML=`<b>Teoría · ${s.th[0]}</b>${s.th[1]}`;
+}
+function drawCables(st, cur, s){
+  const box=document.getElementById("cablesBox");
+  box.innerHTML=`<div class="cables">${CABLES.map(([w,u,v],i)=>`<div class="cable ${st[i]} ${i===cur?"cur":""}"><span>${u}–${v}</span><span>${w}</span></div>`).join("")}</div>
+  <div class="summary"><span>árbol: <span class="big">${s.arbol}</span> de 5 cables</span><span>costo = <span class="big" style="color:${s.arbol===5?COL.green:COL.ink}">${s.costo}</span></span></div>`;
+}
+
+/* ---------- Estado de la app ---------- */
+let mode="uf", k=0; const KSTEPS=kruskalTrace();
+const UF_STATES=(()=>{ const uf=new UnionFind(6), out=[], log=[];
+  UF_STEPS.forEach((s,i)=>{ const prev=clone(uf), n0=log.length; const r=s.run(uf,log); out.push({...s, uf:clone(uf), prev:i?prev:null, log:[...log], n0, result:i?r:undefined}); }); return out; })();
+
+function render(){
+  const stage=document.getElementById("stage"), netView=document.getElementById("netView");
+  document.getElementById("stepControls").hidden = mode==="free";
+  document.getElementById("freeControls").hidden = mode!=="free";
+  if(mode==="uf"){
+    stage.classList.add("one"); netView.hidden=true; document.getElementById("cablesBox").innerHTML="";
+    const s=UF_STATES[k], rings={};
+    (UF_FOCUS[k]||[]).forEach(c=>rings[c]= s.color==="red"?COL.red : (k===5&&c==="E")?COL.red : s.color==="green"?COL.green:COL.amber);
+    drawForest(document.getElementById("forest"), s.uf.padre, s.prev&&s.prev.padre, rings);
+    drawTable(s.uf, s.prev); setSide(s); drawConsole(s.log, s.n0); dots(UF_STATES.length);
+  } else if(mode==="k"){
+    stage.classList.remove("one"); netView.hidden=false;
+    const s=KSTEPS[k], prev=k?KSTEPS[k-1].uf:null, rings={};
+    (s.focus||[]).forEach(c=>rings[c]=COL[s.color]);
+    drawNet(document.getElementById("net"), s.st, s.cur, k? s.uf.padre : null, s.final);
+    drawForest(document.getElementById("forest"), s.uf.padre, prev&&prev.padre, rings);
+    drawTable(s.uf, prev); setSide(s); drawCables(s.st, s.cur, s);
+    drawConsole(s.log, k? KSTEPS[k-1].log.length : 0); dots(KSTEPS.length);
+  } else renderFree();
+  const max = mode==="uf"?UF_STATES.length:KSTEPS.length;
+  document.getElementById("prev").disabled = k===0; document.getElementById("next").disabled = k===max-1;
+}
+function dots(n){
+  const d=document.getElementById("dots"); d.innerHTML="";
+  for(let i=0;i<n;i++){ const b=document.createElement("button"); b.className="dot"; b.setAttribute("aria-label",`Ir al paso ${i}`); if(i===k) b.setAttribute("aria-current","step"); b.onclick=()=>{k=i;render();}; d.appendChild(b); }
+}
+
+/* ---------- Modo libre ---------- */
+let free={uf:new UnionFind(6), prev:null, log:[["h","uf = UnionFind(6)"],["s",""]], n0:0, last:null};
+free.log[1][1]=estado(free.uf);
+function renderFree(){
+  document.getElementById("stage").classList.remove("one"); document.getElementById("netView").hidden=false;
+  document.getElementById("cablesBox").innerHTML="";
+  drawNet(document.getElementById("net"), null, -1, free.uf.padre, false);
+  const rings={}; if(free.last) free.last.focus.forEach(c=>rings[c]=COL[free.last.color]);
+  drawForest(document.getElementById("forest"), free.uf.padre, free.prev&&free.prev.padre, rings);
+  drawTable(free.uf, free.prev);
+  setSide(free.last || {tag:"Libre", color:"violet", op:"UnionFind(6)", desc:"Elige dos computadoras y prueba union, conectados o find. La red de arriba solo sirve de referencia: los colores indican a qué conjunto pertenece cada una.",
+    th:["Prueba esto","Une A con B y C con D, luego B con D. Después haz find(D): verás la compresión. Al final intenta union(A, C): devolverá False."]});
+  drawConsole(free.log, free.n0);
+}
+COL.violet="#7c3aed";
+function freeOp(op){
+  const a=document.getElementById("fa").value, b=document.getElementById("fb").value, uf=free.uf;
+  free.prev=clone(uf); free.n0=free.log.length; let r, desc, color, th, focus=[a,b];
+  if(op==="union"){ const ra=N[uf.find(ID[a])], rb=N[uf.find(ID[b])]; r=uf.union(ID[a],ID[b]);
+    desc = r?`find(${a}) = ${ra} y find(${b}) = ${rb}: raíces distintas, se unen.`:`find(${a}) = find(${b}) = ${ra}: ya estaban en el mismo conjunto.`;
+    color=r?"blue":"red"; th=r?["Unión por rango","La raíz de menor rango cuelga de la de mayor; si empatan, la elegida sube su rango."]:["Ciclo","Misma raíz: en un grafo esta arista cerraría un ciclo."];
+    free.log.push([r?"h":"f",`union(${a}, ${b}) -> ${py(r)}`],["s",estado(uf)]); free.last={tag:"Libre",op:`union(${a}, ${b})`,result:r,desc,color,th,focus}; }
+  else if(op==="conectados"){ r=uf.conectados(ID[a],ID[b]);
+    desc=`find(${a}) = ${N[uf.find(ID[a])]} y find(${b}) = ${N[uf.find(ID[b])]}: ${r?"misma raíz":"raíces distintas"}.`;
+    color=r?"green":"red"; th=["Mismo conjunto ⇔ misma raíz","Solo se comparan las raíces; find comprime de paso."];
+    free.log.push([r?"p":"f",`conectados(${a}, ${b}) -> ${py(r)}`],["s",estado(uf)]); free.last={tag:"Libre",op:`conectados(${a}, ${b})`,result:r,desc,color,th,focus}; }
+  else { const before=[]; let x=ID[a]; while(uf.padre[x]!==x){ x=uf.padre[x]; before.push(N[x]); }
+    r=N[uf.find(ID[a])]; focus=[a];
+    desc= before.length>1?`Camino ${a} → ${before.join(" → ")}. Ahora ${a} y los nodos del camino apuntan directo a ${r}.`:`${a} ya estaba a lo mucho a un salto de la raíz ${r}.`;
+    color="amber"; th=["Compresión de caminos","find deja a cada nodo del camino apuntando a la raíz."];
+    free.log.push(["f",`find(${a}) -> ${r}`],["s",estado(uf)]); free.last={tag:"Libre",op:`find(${a})`,result:r,desc,color,th,focus}; }
+  renderFree();
+}
+
+/* ---------- Eventos ---------- */
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.setAttribute("aria-selected", x===t)); mode=t.dataset.mode; k=0; render(); });
+document.getElementById("next").onclick=()=>{ k++; render(); };
+document.getElementById("prev").onclick=()=>{ k--; render(); };
+document.getElementById("reset").onclick=()=>{ k=0; render(); };
+document.querySelectorAll("[data-op]").forEach(b=>b.onclick=()=>freeOp(b.dataset.op));
+document.getElementById("freeReset").onclick=()=>{ free={uf:new UnionFind(6),prev:null,log:[["h","uf = UnionFind(6)"],["s",""]],n0:0,last:null}; free.log[1][1]=estado(free.uf); renderFree(); };
+["fa","fb"].forEach((id,j)=>{ const s=document.getElementById(id); [...N].forEach(c=>{ const o=document.createElement("option"); o.textContent=c; s.appendChild(o); }); s.value= j? "B":"A"; });
+document.addEventListener("keydown",e=>{ if(mode==="free"||e.target.tagName==="SELECT") return;
+  const max = mode==="uf"?UF_STATES.length:KSTEPS.length;
+  if(e.key==="ArrowRight" && k<max-1){k++;render();} if(e.key==="ArrowLeft" && k>0){k--;render();} });
+const h=location.hash.slice(1); if(h==="kruskal"){ document.querySelector('[data-mode="k"]').click(); } else render();
+</script>
+</body>
+</html>
