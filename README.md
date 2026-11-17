@@ -13,6 +13,7 @@
 
 
 | Nombre                 | Número de cuenta | Parte de la exposición |
+|---|---|---|
 |Bolaños Fuentes Juan Manuel|323257419|Demostracion y Analisis|
 |Prado Gutierrez Juan Alejandro |323156271|Demo y explicacion de algoritmo|
 | | | |
