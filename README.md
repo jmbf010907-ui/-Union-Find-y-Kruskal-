@@ -67,9 +67,46 @@ pytest                          # las pruebas
 
 # Parte 1 · Teoría
 
-> ✏️ **Por completar.** Qué es Union-Find, cómo funcionan `find` y `union`,
-> las dos optimizaciones (unión por rango y compresión de caminos) y la idea de
-> Kruskal con su pseudocódigo.
+Contexto: 
+Un árbol de expansión mínima o Minimum Spanning Tree (MST, por sus siglas en inglés) de un grafo conexo no dirigido y ponderado es un subgrafo que conecta todos los vértices, no tiene ciclos y tiene la suma de pesos más baja posible. Kruskal es uno de los algoritmos clásicos para encontrarlo, y necesita una estructura auxiliar para saber rápido si dos vértices ya están conectados: Union-Find.
+
+1. ¿Qué es Union-Find?
+
+Una estructura auxiliar que mantiene una colección de conjuntos disjuntos (sin elementos en común) sobre los elementos 0, 1, ..., n-1, con dos operaciones:
+
+- find(x): devuelve el representante (raíz) del conjunto al que pertenece x.
+- union(x, y): une los conjuntos de x y y.
+
+En una implementación con bosque de árboles: cada conjunto es un árbol cuya raíz es su representante. Sin optimizaciones, los árboles pueden degenerar en listas y las operaciones costar O(n).
+Por eso hay dos optimizaciones para cada parte de Union-Find:
+
+- Union by rank (en el union): Al unir, la raíz del árbol más pequeño apunta a la del más grande. Mantiene la altura en O(log n).
+- Path compresssion (en el find): Durante find, todos los nodos recorridos apuntan directamente a la raíz.
+
+2. Kruskal
+
+Idea: ordenar las aristas de menor a mayor peso y agregarlas una por una, descartando las que formen un ciclo.
+
+Pasos:
+
+1. Crear un conjunto para cada vértice (Union-Find inicial).
+2. Ordenar las aristas por peso ascendente.
+3. Para cada arista (u, v) en ese orden:
+    - Si find(u) != find(v), agregar la arista al MST y hacer union(u, v).
+    - Si no, descartarla (cerraría un ciclo).
+4. Detenerse cuando se hayan agregado n - 1 aristas.
+Pseudocódigo:
+```text
+kruskal(G):
+    MST = {}
+    para cada vértice v: makeSet(v)
+    ordenar E por peso ascendente
+    para cada arista (u, v) en E:
+        si find(u) != find(v):
+            MST = MST ∪ {(u, v)}
+            union(u, v)
+    devolver MST
+```
 
 ---
 
