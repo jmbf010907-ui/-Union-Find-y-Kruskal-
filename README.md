@@ -9,13 +9,12 @@
 
 ## Integrantes
 
-> ✏️ **Por completar.** Nombre completo y número de cuenta de cada integrante.
-
 | Nombre | Número de cuenta | Parte de la exposición |
 |---|---|---|
-| | | |
-| | | |
-| | | |
+| Bolaños Fuentes Juan Manuel | <!-- número de cuenta --> | Demo y Análisis |
+| Guadarrama Climaco Ivan Alexei | <!-- número de cuenta --> | |
+| Miguel Cruz Edgar | <!-- número de cuenta --> | |
+| Prado Gutierrez Juan Alejandro | <!-- número de cuenta --> | |
 
 ---
 
