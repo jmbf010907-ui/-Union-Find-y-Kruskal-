@@ -84,6 +84,7 @@ Por eso hay dos optimizaciones para cada parte de Union-Find:
 - Path compresssion (en el find): Durante find, todos los nodos recorridos apuntan directamente a la raíz.
 
 2. Kruskal
+
 Idea: ordenar las aristas de menor a mayor peso y agregarlas una por una, descartando las que formen un ciclo.
 
 Pasos:
