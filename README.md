@@ -13,7 +13,7 @@
 |---|---|---|
 | Bolaños Fuentes Juan Manuel | <!-- número de cuenta --> | Demo y Análisis |
 | Guadarrama Climaco Ivan Alexei | <!-- número de cuenta --> | |
-| Miguel Cruz Edgar | <!-- 323012944 --> | Conclusiones |
+| Miguel Cruz Edgar | <!-- número de cuenta --> | Conclusiones |
 | Prado Gutierrez Juan Alejandro | <!-- número de cuenta --> | |
 
 ---
