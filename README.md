@@ -74,8 +74,8 @@ Un árbol de expansión mínima o Minimum Spanning Tree (MST, por sus siglas en 
 
 Una estructura auxiliar que mantiene una colección de conjuntos disjuntos (sin elementos en común) sobre los elementos 0, 1, ..., n-1, con dos operaciones:
 
-find(x): devuelve el representante (raíz) del conjunto al que pertenece x.
-union(x, y): une los conjuntos de x y y.
+- find(x): devuelve el representante (raíz) del conjunto al que pertenece x.
+- union(x, y): une los conjuntos de x y y.
 
 Implementación con bosque de árboles: cada conjunto es un árbol cuya raíz es su representante. Sin optimizaciones, los árboles pueden degenerar en listas y las operaciones costar O(n).
 Por eso hay dos optimizaciones para cada parte de Union-Find:
