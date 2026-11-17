@@ -81,7 +81,7 @@ Implementación con bosque de árboles: cada conjunto es un árbol cuya raíz es
 Por eso hay dos optimizaciones para cada parte de Union-Find:
 
 - Union by rank (en el union): Al unir, la raíz del árbol más pequeño apunta a la del más grande. Mantiene la altura en O(log n).
--Path compresssion (en el find): Durante find, todos los nodos recorridos apuntan directamente a la raíz.
+- Path compresssion (en el find): Durante find, todos los nodos recorridos apuntan directamente a la raíz.
 
 2. Kruskal
 Idea: ordenar las aristas de menor a mayor peso y agregarlas una por una, descartando las que formen un ciclo.
