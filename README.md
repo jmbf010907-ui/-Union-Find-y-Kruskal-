@@ -11,10 +11,10 @@
 
 | Nombre | Número de cuenta | Parte de la exposición |
 |---|---|---|
-| Bolaños Fuentes Juan Manuel | <!-- número de cuenta --> | Demo y Análisis |
+| Bolaños Fuentes Juan Manuel | <323257419 | Análisis |
 | Guadarrama Climaco Ivan Alexei | <!-- número de cuenta --> | |
 | Miguel Cruz Edgar | <!-- número de cuenta --> | Conclusiones |
-| Prado Gutierrez Juan Alejandro | <!-- número de cuenta --> | |
+| Prado Gutierrez Juan Alejandro | <!-- número de cuenta --> | Demo |
 
 ---
 
@@ -94,7 +94,6 @@ Pasos:
     - Si find(u) != find(v), agregar la arista al MST y hacer union(u, v).
     - Si no, descartarla (cerraría un ciclo).
 4. Detenerse cuando se hayan agregado n - 1 aristas.
-
 Pseudocódigo:
 ```text
 kruskal(G):
