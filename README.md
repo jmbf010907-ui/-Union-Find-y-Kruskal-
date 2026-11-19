@@ -557,8 +557,10 @@ python src/benchmark.py 20000
 
 # Parte 4 · Conclusiones
 
-> ✏️ **Por completar.** Conclusiones del equipo: qué se aprendió, qué
-> mostraron los resultados y en qué casos conviene Kruskal frente a Prim.
+- Sin optimizaciones, las operaciones se vuelven lentas recorriendo los árboles, tardando más segundos
+- Elegir y optimizar la estructura de datos correcta (Union-Find) transforma el rendimiento de un algoritmo voraz como Kruskal
+- Con unión por rango y compresión de caminos, aplanamos los árboles y bajamos los saltos en menos segundos 
+- El costo por operación queda en un tiempo casi constante O(α(n)). Como Union-Find ya es rapidísimo, lo que más tiempo le toma a Kruskal pasa a ser solo el ordenamiento inicial de las aristas, logrando una eficiencia final de O(E log E)
 
 ---
 
