@@ -203,7 +203,7 @@ function kruskalTrace(){
   const log=[["h","Cables ordenados: "+CABLES.map(([w,u,v])=>`${u}-${v}(${w})`).join(", ")]];
   steps.push({op:"ordenar cables", tag:"Paso 0", color:"blue", cur:-1, st:[...st], costo, arbol, log:[...log], uf:clone(uf),
     desc:"Se ordenan los 8 cables de menor a mayor costo. Nadie está conectado todavía.",
-    th:["Kruskal es voraz","1) ordenar por costo · 2) tomar cada cable si no forma ciclo · 3) parar al tener V − 1 cables (aquí 5). El paso 2 lo resuelve Union-Find."]});
+    th:["Kruskal decide el orden; Union-Find, el sí o el no","Con cada cable: Kruskal propone el siguiente más barato, Union-Find responde si sus dos computadoras tienen la misma raíz, y se decide. Misma raíz: ciclo, se descarta. Raíces distintas: se acepta y union las junta. Se para al tener V − 1 = 5 cables."]});
   const TH = {
     "A-B":["Raíces distintas","find(A)=A y find(B)=B: no hay camino entre A y B. Se acepta y union los junta. Es el paso 1 de la sección 1."],
     "D-F":["Crece como bosque","D–F no toca a {A, B}: aparece un segundo grupo. Kruskal no crece como un solo árbol sino como un bosque que se va uniendo."],
@@ -219,7 +219,7 @@ function kruskalTrace(){
              ["s",`   padre = [${uf.padre.map(p=>N[p]).join(", ")}]   árbol: ${arbol} de 5   costo = ${costo}`]);
     const key=`${u}-${v}`;
     steps.push({op:`${u}–${v} (${w})`, tag:`Paso ${i+1}`, color: ok?"green":"red", cur:i, st:[...st], costo, arbol, uf:clone(uf), log:[...log], focus:[u,v],
-      result: ok?"acepta":"rechaza", desc:`find(${u}) = ${N[ru]}, find(${v}) = ${N[rv]}. ` + (ok?"Raíces distintas: se acepta el cable y se hace union.":"Misma raíz: el cable cerraría un ciclo, se descarta."),
+      result: ok?"acepta":"rechaza", desc:`Kruskal propone ${u}–${v} (${w}). Union-Find: find(${u}) = ${N[ru]}, find(${v}) = ${N[rv]}. ` + (ok?"Raíces distintas: no hay camino entre ellas, se acepta y union las junta.":"Misma raíz: ya hay camino entre ellas, el cable cerraría un ciclo y se descarta."),
       th:TH[key]});
     if(arbol===5) break;
   }

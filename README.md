@@ -385,57 +385,103 @@ def kruskal(n, aristas, verbose=False):
     return arbol, costo
 ```
 
-### Paso 0 · ordenar los cables
+### Quién decide qué
+
+Para que los dos algoritmos no se revuelvan, conviene separar sus trabajos. Con
+**cada cable** pasa lo mismo, siempre en este orden:
+
+| | Quién | Qué hace |
+|:---:|---|---|
+| 1 | **Kruskal** | Propone el siguiente cable más barato (por eso se ordenan al inicio). |
+| 2 | **Union-Find** | Responde una sola pregunta: ¿`find(u)` y `find(v)` tienen la **misma raíz**? |
+| 3 | **Decisión** | Misma raíz: ya hay camino entre ellas, el cable cerraría un ciclo y se **descarta**. Raíces distintas: se **acepta** y `union` junta los dos grupos. |
+
+**Kruskal decide el orden; Union-Find decide el sí o el no.** El costo del cable
+solo interviene en el orden en que se preguntan, nunca en la respuesta. Por eso
+un cable puede ser barato y aun así rechazarse: `D–E` cuesta 5, pero se descarta
+porque `D` y `E` ya estaban conectados.
+
+Al aceptar, `union` cuelga la raíz de menor rango de la de mayor rango (si
+empatan, una cuelga de la otra y su rango sube 1).
+
+### Paso 0 · Kruskal ordena los cables
 
 ![Paso 0](media/s2_paso0.png)
 
-Se ordenan los 8 cables de menor a mayor costo. Todavía nadie está conectado:
-cada computadora es su propio conjunto.
+- **Kruskal:** ordena los 8 cables de menor a mayor costo: `A–B (1)`, `D–F (2)`,
+  `B–D (3)`, `E–F (4)`, `D–E (5)`, `A–C (6)`, `C–E (7)`, `B–C (8)`.
+- **Union-Find:** `UnionFind(6)`. Cada computadora es su propio conjunto.
+- **Estado:** `conjuntos = 6` · árbol 0 de 5 · costo 0. Todavía no se decide nada.
 
-### Paso 1 · `A–B (1)` ✓
+### Paso 1 · `A–B (1)` ✓ se acepta
 
 ![Paso 1](media/s2_paso1.png)
 
-`find(A) = A`, `find(B) = B`. Raíces distintas: no hay camino entre ellas, así
-que se acepta y `union(A, B)` las junta. Es literalmente el paso 1 de la sección 1:
-los tres cables más baratos son los mismos que instalamos a mano.
+- **Kruskal propone:** `A–B`, el más barato.
+- **Union-Find responde:** `find(A) = A` y `find(B) = B`. Raíces distintas: no hay
+  camino entre ellas.
+- **Decisión:** se acepta. En `union(A, B)` los rangos empatan (0 y 0), `B` cuelga
+  de `A` y `rango[A]` sube a 1. Es el paso 1 de la sección 1.
+- **Estado:** `conjuntos = 5` · árbol 1 de 5 · costo 1
 
-### Paso 2 · `D–F (2)` ✓
+### Paso 2 · `D–F (2)` ✓ se acepta
 
 ![Paso 2](media/s2_paso2.png)
 
-`find(D) = D`, `find(F) = F`. Se acepta. No toca a `{A, B}`: Kruskal crece como
-un **bosque** que se va uniendo, no como un solo árbol.
+- **Kruskal propone:** `D–F`, el siguiente más barato.
+- **Union-Find responde:** `find(D) = D` y `find(F) = F`. Raíces distintas.
+- **Decisión:** se acepta. Los rangos empatan, `F` cuelga de `D` y `rango[D]` sube
+  a 1. No toca a `{A, B}`: ahora hay **dos árboles separados**, un bosque. Es el
+  paso 2 de la sección 1.
+- **Estado:** `conjuntos = 4` · árbol 2 de 5 · costo 3
 
-### Paso 3 · `B–D (3)` ✓
+### Paso 3 · `B–D (3)` ✓ se acepta
 
 ![Paso 3](media/s2_paso3.png)
 
-`find(B) = A`, `find(D) = D`. Se acepta y se unen los dos grupos. Rangos 1 y 1:
-`D` cuelga de `A` y `rango[A] = 2`. Igual que el paso 3 de la sección 1.
+- **Kruskal propone:** `B–D`.
+- **Union-Find responde:** `find(B)` sube `B → A` y da `A`; `find(D) = D`. Raíces
+  distintas. Se comparan las **raíces**, no los elementos: `B` y `D` no tienen que
+  ser raíces.
+- **Decisión:** se acepta. Rangos 1 y 1: el árbol de `D` completo cuelga de `A` y
+  `rango[A]` sube a 2. Los dos árboles se vuelven uno. Es el paso 3 de la sección 1.
+- **Estado:** `conjuntos = 3` · árbol 3 de 5 · costo 6
 
-### Paso 4 · `E–F (4)` ✓
+### Paso 4 · `E–F (4)` ✓ se acepta
 
 ![Paso 4](media/s2_paso4.png)
 
-`find(E) = E`. `find(F)` recorre `F → D → A` y **comprime**: `F` queda apuntando
-a `A`. Como `rango[E] = 0 < rango[A] = 2`, `E` cuelga de `A`. Es el paso 4 de la
-sección 1.
+- **Kruskal propone:** `E–F`.
+- **Union-Find responde:** `find(E) = E`. `find(F)` recorre `F → D → A` y, de paso,
+  **comprime**: `F` queda apuntando a `A`. Raíces distintas (`E` y `A`).
+- **Decisión:** se acepta. `rango[E] = 0 < rango[A] = 2`, así que `E` cuelga de `A`
+  y ningún rango sube. Es el paso 4 de la sección 1.
+- **Estado:** `conjuntos = 2` · árbol 4 de 5 · costo 10
 
-### Paso 5 · `D–E (5)` ✗ ciclo
+### Paso 5 · `D–E (5)` ✗ se descarta
 
 ![Paso 5](media/s2_paso5.png)
 
-`find(D) = A` y `find(E) = A`. **Misma raíz**: `D` y `E` ya están conectados por
-`D–F–E`, así que este cable cerraría un ciclo. `union` regresa `False` y se
-descarta. Es el paso 6 de la sección 1.
+- **Kruskal propone:** `D–E`, que cuesta apenas 5.
+- **Union-Find responde:** `find(D) = A` y `find(E) = A`. **Misma raíz**: `D` y `E`
+  ya están conectados por `D–F–E`.
+- **Decisión:** se descarta. Este cable cerraría un ciclo, así que `union` regresa
+  `False` y no cambia nada. Es el paso 6 de la sección 1.
+- **Estado:** `conjuntos = 2` · árbol 4 de 5 · costo 10 (sin cambio)
 
-### Paso 6 · `A–C (6)` ✓ y termina
+### Paso 6 · `A–C (6)` ✓ se acepta y termina
 
 ![Paso 6](media/s2_paso6.png)
 
-`find(A) = A`, `find(C) = C`. Se acepta. Ya son 5 cables, `V − 1`, así que el
-árbol está completo: `C–E (7)` y `B–C (8)` ni se revisan.
+- **Kruskal propone:** `A–C`.
+- **Union-Find responde:** `find(A) = A` y `find(C) = C`. Raíces distintas: `C` era la
+  única computadora sin conectar.
+- **Decisión:** se acepta. `rango[C] = 0 < rango[A] = 2`, así que `C` cuelga de `A`.
+  Es el paso 7 de la sección 1.
+- **Estado:** `conjuntos = 1` · árbol 5 de 5 · costo 16
+
+Ya hay `V − 1 = 5` cables, así que Kruskal se detiene: `C–E (7)` y `B–C (8)` ni se
+le preguntan a Union-Find.
 
 ### Resultado
 

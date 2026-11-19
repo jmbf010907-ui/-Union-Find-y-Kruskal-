@@ -270,12 +270,12 @@ uf_step(T + "paso7.png", "Paso 7", "cable A–C  ·  union(A, C)",
         badge=("True · red cerrada", GREEN, GREEN_BG), color=GREEN)
 
 # ================= Sección 2 · Kruskal =================
-def k_step(name, k, paso, titulo, sub, teoria, color, changed=()):
+def k_step(name, k, paso, titulo, sub, teoria, color, changed=(), ctitle="Kruskal + Union-Find"):
     c = Canvas(); header(c, paso, titulo, sub, color)
     par, rk, st, total, _ = kstate(k)
     draw_net(c, st, k, colors=[SET[root(par, i)] for i in range(6)] if k >= 0 else None)
     edge_list(c, st, k)
-    card(c, (1160, 220, 1530, 640), "Teoría", teoria, color, sz=24, gap=38)
+    card(c, (1160, 220, 1530, 640), ctitle, teoria, color, sz=24, gap=38)
     arrays(c, par, None, changed, y=650, x0=200, cw=74)
     acc = st.count("a")
     c.rect((1160, 680, 1530, 800), 20, fill=GREEN_BG if acc == 5 else (240, 245, 252))
@@ -284,20 +284,33 @@ def k_step(name, k, paso, titulo, sub, teoria, color, changed=()):
     c.save(name)
 
 T = "s2_"
-k_step(T + "paso0.png", -1, "Paso 0", "ordenar los cables", "Volvemos a empezar, pero ahora el orden lo decide el algoritmo: del cable más barato al más caro.",
-       ["Kruskal es voraz:", "", "1. ordenar por peso", "2. tomar el cable si", "   no forma ciclo", "3. parar con V − 1", "   cables (aquí 5)", "", "Para 2 usa Union-Find."], BLUE)
-k_step(T + "paso1.png", 0, "Paso 1", "A–B (1)", "find(A) = A, find(B) = B. Raíces distintas: se acepta y union(A, B).",
-       ["Raíces distintas", "  → no hay camino", "  entre A y B.", "", "Se acepta el cable", "y union los junta.", "", "Es el paso 1 de la", "sección 1."], GREEN, {(0, 1)})
-k_step(T + "paso2.png", 1, "Paso 2", "D–F (2)", "find(D) = D, find(F) = F. Raíces distintas: se acepta y union(D, F).",
-       ["No toca a {A, B}:", "aparece otro grupo.", "", "Kruskal crece como", "un bosque, no como", "un solo árbol.", "", "Igual al paso 2."], GREEN, {(0, 5)})
-k_step(T + "paso3.png", 2, "Paso 3", "B–D (3)", "find(B) = A, find(D) = D. Raíces distintas: se unen los dos grupos.",
-       ["Une {A, B} con {D, F}.", "", "Rangos 1 y 1:", "D cuelga de A y", "rango[A] = 2.", "", "Mismo resultado que", "el paso 3 de la", "sección 1."], GREEN, {(0, 3)})
-k_step(T + "paso4.png", 3, "Paso 4", "E–F (4)", "find(E) = E, find(F) = A (y F se comprime). Raíces distintas: se acepta.",
-       ["find(F): F → D → A", "y comprime: F → A.", "", "rango[E] = 0 < 2:", "E cuelga de A.", "", "Es el paso 4 de la", "sección 1."], GREEN, {(0, 4), (0, 5)})
-k_step(T + "paso5.png", 4, "Paso 5", "D–E (5)", "find(D) = A y find(E) = A. Misma raíz: el cable cerraría un ciclo, se descarta.",
-       ["Ya hay camino:", "  D – F – E", "", "union devuelve False", "  → se rechaza.", "", "Es el paso 6 de la", "sección 1."], RED)
-k_step(T + "paso6.png", 5, "Paso 6", "A–C (6)", "find(A) = A, find(C) = C. Se acepta: ya son 5 cables = V − 1. Termina.",
-       ["5 cables = V − 1", "  → árbol completo.", "", "C–E (7) y B–C (8)", "ni se revisan.", "", "Todas las raíces", "son A: un conjunto."], GREEN, {(0, 2)})
+k_step(T + "paso0.png", -1, "Paso 0", "Kruskal ordena los cables", "Primero se ordenan los 8 cables del más barato al más caro. Todavía nadie está conectado.",
+       ["Kruskal es voraz:", "", "1. ordenar por peso", "2. tomar el cable si", "   no forma ciclo", "3. parar con V − 1", "   cables (aquí 5)", "El punto 2 lo decide", "Union-Find."], BLUE, ctitle="Teoría")
+k_step(T + "paso1.png", 0, "Paso 1", "A–B (1)", "Kruskal propone el cable más barato. Union-Find: find(A) = A, find(B) = B.",
+       ["Kruskal propone:", "  A–B (1).", "", "Union-Find responde:", "  find(A) ≠ find(B)", "  → raíces distintas.", "", "Decisión: se acepta.", "B cuelga de A."], GREEN, {(0, 1)})
+k_step(T + "paso2.png", 1, "Paso 2", "D–F (2)", "Kruskal propone el siguiente. Union-Find: find(D) = D, find(F) = F.",
+       ["Kruskal propone:", "  D–F (2).", "", "Union-Find responde:", "  find(D) ≠ find(F)", "  → raíces distintas.", "", "Decisión: se acepta.", "Nace otro grupo."], GREEN, {(0, 5)})
+k_step(T + "paso3.png", 2, "Paso 3", "B–D (3)", "Union-Find compara raíces, no elementos: find(B) = A y find(D) = D.",
+       ["Kruskal propone:", "  B–D (3).", "", "Union-Find responde:", "  find(B) = A", "  find(D) = D", "", "Decisión: se acepta.", "Se unen los grupos."], GREEN, {(0, 3)})
+k_step(T + "paso4.png", 3, "Paso 4", "E–F (4)", "find(F) sube F → D → A y comprime el camino: F queda apuntando a A.",
+       ["Kruskal propone:", "  E–F (4).", "", "Union-Find responde:", "  find(E) = E", "  find(F) = A", "", "Decisión: se acepta.", "E cuelga de A."], GREEN, {(0, 4), (0, 5)})
+k_step(T + "paso5.png", 4, "Paso 5", "D–E (5)", "find(D) = A y find(E) = A. Misma raíz: ya están conectados por D–F–E.",
+       ["Kruskal propone:", "  D–E (5).", "", "Union-Find responde:", "  find(D) = find(E)", "  → misma raíz.", "", "Decisión: se descarta,", "cerraría un ciclo."], RED)
+k_step(T + "paso6.png", 5, "Paso 6", "A–C (6)", "find(A) = A, find(C) = C. C era la única sin conectar. Ya son 5 cables.",
+       ["Kruskal propone:", "  A–C (6).", "", "Union-Find responde:", "  find(A) ≠ find(C)", "", "Decisión: se acepta.", "5 cables = V − 1:", "Kruskal para."], GREEN, {(0, 2)})
+
+def k_apoyo(name):
+    c = Canvas(); header(c, "Apoyo", "Kruskal se apoya en Union-Find", "Con cada cable: Kruskal propone, Union-Find responde y se decide.", BLUE)
+    card(c, (80, 220, 520, 640), "Kruskal", ["Ordena los cables del", "más barato al más caro", "y propone uno por uno.", "", "Decide el orden."], GREEN, sz=26, gap=44)
+    card(c, (560, 220, 1040, 640), "Union-Find", ["Responde una sola cosa:", "", "  find(u) == find(v) ?", "", "¿Tienen la misma raíz?", "Decide el sí o el no."], BLUE, sz=26, gap=44)
+    card(c, (1080, 220, 1520, 420), "Raíces distintas", ["No hay camino → se acepta", "y union junta los grupos."], GREEN, sz=24, gap=40)
+    card(c, (1080, 440, 1520, 640), "Misma raíz", ["Ya hay camino → cerraría", "un ciclo → se descarta."], RED, sz=24, gap=40)
+    c.rect((80, 680, 1520, 850), 22, fill=(237, 233, 254))
+    c.text((800, 730), "El costo del cable solo decide el orden, nunca el sí o el no.", "bold", 30, (76, 29, 149), "mm")
+    c.text((800, 782), "D–E cuesta apenas 5 y aun así se descarta: D y E ya estaban conectados.", "reg", 27, INK, "mm")
+    c.text((800, 822), "Por dentro, unión por rango y compresión de caminos mantienen find casi constante.", "reg", 25, MUTED, "mm")
+    c.save(name)
+k_apoyo("s2_apoyo.png")
 
 def resultado(name):
     c = Canvas(); header(c, "Resultado", "Árbol de expansión mínima", "Las 6 computadoras conectadas, sin ciclos y con el menor costo.", GREEN)
@@ -320,8 +333,8 @@ resultado("s2_resultado.png")
 def problema(name):
     c = Canvas(); header(c, "El problema", "6 computadoras, 8 cables", "Hay que conectarlas todas gastando lo menos posible en cable.", INK)
     draw_net(c, ["p"] * 8, gx=170, gy=330, dx=310, dy=300)
-    qs = [(250, "¿A y F ya están conectadas?", "Sección 1 · Union-Find", "find(A) == find(F)", BLUE),
-          (470, "¿Qué cables compro?", "Sección 2 · Kruskal", "menor costo, sin ciclos", GREEN)]
+    qs = [(250, "¿Qué cables compro?", "Kruskal · propone del más barato al más caro", "menor costo, sin ciclos", GREEN),
+          (470, "¿Estas dos ya están conectadas?", "Union-Find · decide si el cable se acepta", "find(u) == find(v)", BLUE)]
     for y, q, s, d, col in qs:
         c.rect((900, y, 1530, y + 190), 24, fill=mix(col, WHITE, 0.9), outline=mix(col, WHITE, 0.55), w=2)
         c.text((935, y + 48), q, "bold", 30, INK, "lm")
@@ -333,7 +346,7 @@ problema("problema.png")
 
 def portada(name, num, titulo, sub, items, col):
     c = Canvas(); c.im.paste(mix(col, (8, 16, 40), 0.55), [0, 0, W * S, H * S])
-    c.text((110, 200), f"Sección {num}", "semi", 34, mix(col, WHITE, 0.6), "lm")
+    c.text((110, 200), num if isinstance(num, str) else f"Sección {num}", "semi", 34, mix(col, WHITE, 0.6), "lm")
     c.text((106, 300), titulo, "black", 120, WHITE, "lm")
     c.text((110, 400), sub, "reg", 32, mix(col, WHITE, 0.75), "lm")
     for i, it in enumerate(items):
@@ -343,8 +356,8 @@ def portada(name, num, titulo, sub, items, col):
     c.save(name)
 portada("s1_portada.png", 1, "Union-Find", "¿Estas dos computadoras ya están conectadas?",
         ["Teoría: cada grupo es un árbol", "Instalamos los primeros cables uno por uno", "Código y lo que imprime"], BLUE)
-portada("s2_portada.png", 2, "Kruskal", "¿Qué cables compro para conectarlas todas al menor costo?",
-        ["Teoría: algoritmo voraz + Union-Find", "Paso a paso sobre la misma red (6 pasos)", "Resultado, código y lo que imprime"], GREEN)
+portada("s2_portada.png", "Demo · paso a paso", "Kruskal + Union-Find", "¿Qué cables compro para conectarlas todas al menor costo?",
+        ["Kruskal ordena los cables de menor a mayor peso", "Union-Find decide cuáles se aceptan", "Resultado y código de los dos"], GREEN)
 
 def teoria_uf(name):
     c = Canvas(); header(c, "Teoría", "Union-Find", "Estructura para conjuntos disjuntos: cada conjunto es un árbol y su raíz lo representa.")
